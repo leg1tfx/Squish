@@ -81,6 +81,9 @@ describe('buildPlan: encoder + mode', () => {
   it('never goes below 50 kbit/s video', () => {
     expect(buildPlan(info({ durationSec: 3600 }), s({ maxMB: 10 }), ['cpu']).videoKbps).toBe(50)
   })
+  it('reports an honest estimate above the requested limit when the minimum bitrate binds', () => {
+    expect(buildPlan(info({ durationSec: 3600 }), s({ maxMB: 10 }), ['cpu']).estimateBytes).toBeGreaterThan(10_000_000)
+  })
   it('manual bitrate mode uses the given bitrate', () => {
     expect(buildPlan(info(), s({ bitrateKbps: 12_000 }), ['cpu'])).toMatchObject({ mode: 'bitrate', videoKbps: 12_000 })
   })

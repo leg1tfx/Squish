@@ -108,8 +108,7 @@ export function buildPlan(
     videoKbps = Math.round((width * height * fps * QUALITY_BPP[s.codec]) / 1000)
   }
 
-  let estimateBytes = Math.round(((videoKbps + a) * 1000 * dur) / 8)
-  if (s.maxMB !== null) estimateBytes = Math.min(estimateBytes, Math.round(s.maxMB * 1e6 * SIZE_MARGIN))
+  const estimateBytes = Math.round(((videoKbps + a) * 1000 * dur) / 8)
 
   const base = {
     mode, encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
