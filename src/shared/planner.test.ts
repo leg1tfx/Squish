@@ -1,0 +1,128 @@
+import { describe, expect, it } from 'vitest'
+import { buildPlan, disabledFps, disabledRes, outputDims } from './planner'
+import type { Settings, VideoInfo } from './types'
+
+const info = (p: Partial<VideoInfo> = {}): VideoInfo => ({
+  path: 'C:\\v\\a.mp4', sizeBytes: 1_340_000_000, durationSec: 134,
+  width: 3840, height: 2160, fps: 60, fpsFraction: '60/1', videoCodec: 'h264', videoKbps: 80_000,
+  hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, ...p
+})
+const s = (p: Partial<Settings> = {}): Settings => ({
+  res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, encoder: 'auto', ...p
+})
+const ALL = ['nvenc', 'amf', 'qsv', 'cpu'] as const
+
+describe('outputDims', () => {
+  it('keeps source size on Best up to 4K', () => {
+    expect(outputDims(info(), 'best')).toEqual({ width: 3840, height: 2160 })
+  })
+  it('caps Best at short side 2160', () => {
+    expect(outputDims(info({ width: 7680, height: 4320 }), 'best')).toEqual({ width: 3840, height: 2160 })
+  })
+  it('uses the short side for portrait video', () => {
+    expect(outputDims(info({ width: 2160, height: 3840 }), '1080')).toEqual({ width: 1080, height: 1920 })
+  })
+  it('never upscales', () => {
+    expect(outputDims(info({ width: 1280, height: 720 }), '1080')).toEqual({ width: 1280, height: 720 })
+  })
+  it('rounds odd sizes to even', () => {
+    expect(outputDims(info({ width: 1081, height: 1921 }), 'best')).toEqual({ width: 1082, height: 1922 })
+  })
+})
+
+describe('disabled options', () => {
+  it('disables resolutions above the source', () => {
+    expect(disabledRes(info({ width: 1920, height: 1080 }))).toEqual(['1440'])
+  })
+  it('disables 60 fps for 30 fps sources', () => {
+    expect(disabledFps(info({ fps: 30 }))).toEqual(['60'])
+    expect(disabledFps(info({ fps: 59.94 }))).toEqual([])
+  })
+})
+
+describe('buildPlan: best rules', () => {
+  it('caps frame rate at 60 and keeps the exact source fraction when unchanged', () => {
+    expect(buildPlan(info({ fps: 120, fpsFraction: '120/1' }), s(), ['cpu'])).toMatchObject({ fps: 60, fpsExpr: '60' })
+    expect(buildPlan(info({ fps: 59.94, fpsFraction: '60000/1001' }), s(), ['cpu'])).toMatchObject({ fpsExpr: '60000/1001' })
+  })
+  it('never raises audio above the source bitrate', () => {
+    expect(buildPlan(info({ audioKbps: 192 }), s(), ['cpu']).audioKbps).toBe(192)
+    expect(buildPlan(info({ audioKbps: 1536, audioCodec: 'pcm_s16le' }), s({ audio: 'high' }), ['cpu']).audioKbps).toBe(192)
+  })
+  it('returns null audio for silent video', () => {
+    expect(buildPlan(info({ hasAudio: false, audioKbps: 0, audioCodec: '' }), s(), ['cpu']).audioKbps).toBeNull()
+  })
+})
+
+describe('buildPlan: encoder + mode', () => {
+  it('auto picks the first available encoder in NVENC, AMF, QSV, CPU order', () => {
+    expect(buildPlan(info(), s(), ['amf', 'cpu']).encoder).toBe('amf')
+    expect(buildPlan(info(), s(), ['cpu']).encoder).toBe('cpu')
+  })
+  it('falls back to CPU when the chosen encoder is not available', () => {
+    expect(buildPlan(info(), s({ encoder: 'nvenc' }), ['cpu']).encoder).toBe('cpu')
+  })
+  it('quality mode estimates with bits per pixel', () => {
+    const p = buildPlan(info(), s(), [...ALL])
+    expect(p.mode).toBe('quality')
+    expect(p.videoKbps).toBe(29_860)
+    expect(p.passes).toBe(1)
+  })
+  it('target mode budgets 97 % of the limit minus audio', () => {
+    const p = buildPlan(info(), s({ maxMB: 10, audio: 'high' }), ['cpu'])
+    expect(p.mode).toBe('target')
+    expect(p.videoKbps).toBe(387)
+    expect(p.estimateBytes).toBeLessThanOrEqual(9_700_000)
+    expect(p.passes).toBe(2)
+  })
+  it('GPU target encodes are single pass', () => {
+    expect(buildPlan(info(), s({ maxMB: 10 }), ['nvenc', 'cpu']).passes).toBe(1)
+  })
+  it('never goes below 50 kbit/s video', () => {
+    expect(buildPlan(info({ durationSec: 3600 }), s({ maxMB: 10 }), ['cpu']).videoKbps).toBe(50)
+  })
+  it('manual bitrate mode uses the given bitrate', () => {
+    expect(buildPlan(info(), s({ bitrateKbps: 12_000 }), ['cpu'])).toMatchObject({ mode: 'bitrate', videoKbps: 12_000 })
+  })
+  it('max size wins over manual bitrate', () => {
+    expect(buildPlan(info(), s({ bitrateKbps: 12_000, maxMB: 10 }), ['cpu']).mode).toBe('target')
+  })
+  it('override replaces encoder and bitrate', () => {
+    expect(buildPlan(info(), s({ maxMB: 10 }), ['nvenc', 'cpu'], { encoder: 'cpu', videoKbps: 300 }))
+      .toMatchObject({ encoder: 'cpu', videoKbps: 300, passes: 2 })
+  })
+})
+
+describe('buildPlan: warning', () => {
+  it('warns when 10 MB is tight for 4K and suggests 720p', () => {
+    const w = buildPlan(info(), s({ maxMB: 10, codec: 'h264', audio: 'high' }), ['cpu']).warning
+    expect(w).toEqual({ text: '10 MB is tight for 4K. 720p will look cleaner.', suggest: '720' })
+  })
+  it('suggests the largest lower resolution that clears the threshold', () => {
+    const w = buildPlan(info({ durationSec: 40 }), s({ maxMB: 25, codec: 'h264', audio: 'high' }), ['cpu']).warning
+    expect(w?.suggest).toBe('1080')
+  })
+  it('does not warn at 720p or in quality mode', () => {
+    expect(buildPlan(info(), s({ maxMB: 10, res: '720' }), ['cpu']).warning).toBeNull()
+    expect(buildPlan(info(), s(), ['cpu']).warning).toBeNull()
+  })
+})
+
+describe('buildPlan: changes', () => {
+  it('marks unchanged values as kept', () => {
+    const c = buildPlan(info(), s(), ['cpu']).changes
+    expect(c.map((x) => [x.label, x.to])).toEqual([
+      ['RESOLUTION', 'kept'], ['FRAME RATE', 'kept'], ['AUDIO', 'kept'], ['VIDEO', 'H.265 29.9M']
+    ])
+  })
+  it('lists lowered values and HDR conversion', () => {
+    const c = buildPlan(info({ hdr: true }), s({ res: '1080', audio: 'standard' }), ['cpu']).changes
+    expect(c.find((x) => x.label === 'RESOLUTION')?.to).toBe('1920×1080')
+    expect(c.find((x) => x.label === 'AUDIO')?.to).toBe('AAC 128k')
+    expect(c.find((x) => x.label === 'HDR')).toEqual({ label: 'HDR', from: 'HDR', to: 'SDR' })
+  })
+  it('omits the audio row for silent video', () => {
+    const c = buildPlan(info({ hasAudio: false, audioKbps: 0, audioCodec: '' }), s(), ['cpu']).changes
+    expect(c.some((x) => x.label === 'AUDIO')).toBe(false)
+  })
+})
