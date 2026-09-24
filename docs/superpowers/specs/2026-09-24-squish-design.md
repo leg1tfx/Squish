@@ -117,7 +117,7 @@ Squish nimmt 5 Sekunden ab der Mitte des Videos und encodiert sie mit denselben 
 
 ## 5. Architektur
 
-**Stack:** Electron, Vite, React 18 und TypeScript. Animationen kommen von Motion (`motion/react`), das Styling von CSS-Variablen aus den Pyno-Tokens. Paketiert wird mit electron-builder als NSIS-Installer „Pyno's Squish Setup.exe“. Das Projekt wird neu aufgesetzt, ohne Vorlage aus einer anderen App.
+**Stack:** Electron, electron-vite, React 19 und TypeScript. Animationen kommen von Motion (`motion/react`), das Styling von CSS-Variablen aus den Pyno-Tokens. Paketiert wird mit electron-builder als NSIS-Installer „Pyno's Squish Setup.exe“. Das Projekt wird neu aufgesetzt, ohne Vorlage aus einer anderen App.
 
 ### 5.1 Main-Prozess
 
@@ -133,7 +133,7 @@ Squish nimmt 5 Sekunden ab der Mitte des Videos und encodiert sie mit denselben 
 
 ### 5.2 Renderer
 
-Es gibt fünf Screens (`DropScreen`, `SettingsScreen`, `CompareScreen`, `EncodingScreen`, `DoneScreen`) und gemeinsame Bausteine (`Segmented`, `PresetChips`, `SizeReadout`, `TimelineLoader`, `Seal`). Der Zustand liegt in einem kleinen Store pro Sitzung. Der Plan wird bei jeder Einstellungsänderung über IPC neu berechnet.
+Es gibt fünf Screens (`DropScreen`, `SettingsScreen`, `CompareScreen`, `EncodingScreen`, `DoneScreen`) und gemeinsame Bausteine (`Segmented`, `PresetChips`, `SizeReadout`, `TimelineLoader`, `Seal`). Der Zustand liegt in einem kleinen Store pro Sitzung. `plan.ts` liegt in `src/shared/` und läuft sowohl im Renderer (sofortige Anzeige bei jeder Änderung) als auch im Main-Prozess (Encoding). Main und Renderer nutzen also exakt dieselbe Rechnung.
 
 ### 5.3 Sicherheit
 
