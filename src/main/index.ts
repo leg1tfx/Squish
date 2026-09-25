@@ -45,8 +45,8 @@ app.whenReady().then(() => {
   })
   const ipc = registerIpc(env, () => win)
   app.on('before-quit', (e) => {
+    e.preventDefault()
     if (!quitting) {
-      e.preventDefault()
       quitting = true
       void ipc.shutdown().then(() => cleanupTemp(tmpRoot)).finally(() => app.exit(0))
     }

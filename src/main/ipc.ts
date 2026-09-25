@@ -74,9 +74,9 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
     if (job) return { ok: false, kind: 'ffmpeg', message: 'An encode is already running.', log: '' }
     if (!info) return { ok: false, kind: 'ffmpeg', message: 'No video loaded.', log: '' }
     job = new AbortController()
-    await mkdir(env.tmpDir, { recursive: true })
-    const output = uniqueOutputPath(info.path, existsSync)
     try {
+      await mkdir(env.tmpDir, { recursive: true })
+      const output = uniqueOutputPath(info.path, existsSync)
       const result = await runEncode(
         { info, settings, available: await encodersP, output },
         { run, tmpDir: env.tmpDir, fileSize: async (p) => (await stat(p)).size, remove: (p) => unlink(p).catch(() => {}) },
@@ -86,7 +86,8 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
       return { ok: true, result }
     } catch (e) {
       if (e instanceof EncodeError) return { ok: false, kind: e.kind, message: e.message, log: e.log }
-      return { ok: false, kind: 'ffmpeg', message: (e as Error).message, log: '' }
+      const err = e as NodeJS.ErrnoException
+      return { ok: false, kind: err?.code === 'ENOSPC' ? 'disk' : 'ffmpeg', message: err.message, log: '' }
     } finally {
       job = null
     }
