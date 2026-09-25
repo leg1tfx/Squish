@@ -60,6 +60,13 @@ export interface Change {
   to: string
 }
 
+export interface StoreData {
+  version: 1
+  userPresets: Preset[]
+  lastPresetId: string
+  promoDismissed: boolean
+}
+
 export interface Plan {
   mode: PlanMode
   encoder: EncoderId
