@@ -18,10 +18,10 @@ Pyno's Squish sendet anonyme Nutzungs- und Fehlerstatistiken, damit drei Fragen 
 
 | Punkt | Entscheidung |
 |---|---|
-| Dienst | Aptabase Cloud, Region EU, SDK `@aptabase/electron` |
-| Kennungen | Nur die Session-ID des SDK. Keine dauerhafte Geräte- oder Install-ID |
+| Dienst | Aptabase Cloud, Region EU, über einen eigenen schlanken Client (kein SDK, siehe 4.2) |
+| Kennungen | Nur eine Session-ID (neu bei jedem Start und nach 1 h Inaktivität). Keine dauerhafte Geräte- oder Install-ID |
 | Einwilligung | Opt-out: standardmäßig an, Hinweis beim ersten Start, jederzeit im About-Dialog abschaltbar |
-| Automatische Systemdaten (SDK) | OS-Name/-Version, Locale, App-Version, SDK-Version, Debug-Flag |
+| Automatische Systemdaten | OS-Name/-Version, Locale, Chromium-Version, App-Version, Client-Version, Debug-Flag |
 | Netzwerk | Einzige neue Verbindung: Aptabase-Ingestion. Der Pyno's-Link bleibt wie bisher |
 
 **Nicht im Umfang:** Crash-Reporting mit Stacktraces (Sentry o. Ä.), eigenes Backend, exakte Zählung von Installationen, Übersetzungen.
@@ -49,9 +49,9 @@ Event-Namen und Props sind eine feste, getypte Allowlist in `src/shared/telemetr
 - `mode`: `quality` (kein Limit, keine Bitrate), `target` (`maxMB` gesetzt) oder `bitrate`.
 - `encoder`: tatsächlich benutzter Encoder aus `EncodeResult`. `encoder_choice`: `settings.encoder` (`auto`, `nvenc`, …).
 - `gpu_fallback`: `EncodeResult.fellBack`. `attempts`: `EncodeResult.attempts`.
-- `input_mb`: Bucket der Eingabegröße: `<10`, `10-50`, `50-100`, `100-500`, `500-2000`, `>2000`.
+- `input_mb`: Bucket der Eingabegröße: `<10`, `10-50`, `50-100`, `100-500`, `500-2000`, `>=2000`.
 - `ratio`: Ausgabe/Eingabe in Prozent als Bucket: `<10%`, `10-30%`, `30-50%`, `50-70%`, `70-90%`, `>=90%`.
-- `duration`: Videolänge in Sekunden als Bucket: `<15`, `15-60`, `60-300`, `300-1200`, `>1200`.
+- `duration`: Videolänge in Sekunden als Bucket: `<15`, `15-60`, `60-300`, `300-1200`, `>=1200`.
 - `progress`: Fortschritt beim Abbruch: `0-25%`, `25-50%`, `50-75%`, `75-100%`.
 - `ext`: Dateiendung klein geschrieben, nur wenn sie in der Liste des Datei-Dialogs steht (`mp4`, `mov`, `mkv`, `webm`, `avi`, `m4v`, `mts`, `m2ts`, `wmv`), sonst `"other"`.
 
@@ -73,13 +73,18 @@ Alle Events werden im Main-Prozess gesendet. Der Renderer spricht Aptabase nie d
 
 ### 4.2 `src/main/telemetry.ts` (neu)
 
-- `initTelemetry(appKey)`: ruft `initialize(appKey)` des SDK auf, **vor** `app.whenReady()`. Bei leerem Key: nichts initialisieren, alle `track()` sind No-ops.
-- `track(event, isEnabled)`: sendet nur, wenn `isEnabled()` `true` liefert. Fire-and-forget: wird nie `await`et, Fehler werden in `try/catch` bzw. `.catch()` verschluckt.
-- Das SDK wird per Dependency Injection übergeben, damit Tests es mocken können.
+Eigener Client statt `@aptabase/electron`. Das SDK ruft intern selbst `protocol.registerSchemesAsPrivileged` auf, was die Registrierung des `squish-media`-Schemes überschreiben kann (Vorschau und Compare wären kaputt). Außerdem öffnet es einen IPC-Kanal und ein `aptabase-ipc://`-Protokoll, über die Events am Consent-Check vorbei gesendet werden könnten. Die Aptabase-Ingestion-API ist dokumentiert und klein, ein eigener Client sind rund 60 Zeilen.
+
+- `endpointFor(appKey)`: parst `A-<REGION>-<id>` zu `https://eu.aptabase.com/api/v0/event` bzw. `us`. Ungültiger oder leerer Key: `null`, Telemetrie ist dann ein No-op.
+- `createTelemetry({ appKey, system, isEnabled, fetch })` liefert `{ track(event): Promise<void> }`.
+  - `track` prüft zuerst `isEnabled()`, sendet dann genau ein Event als JSON-POST mit Header `App-Key`, Timeout 10 s.
+  - Das Promise wird nie abgelehnt: alle Fehler (Netz, Timeout, `isEnabled` wirft) werden verschluckt. Aufrufer rufen es mit `void` auf.
+  - Session-ID: Epoch-Sekunden plus 8 Zufallsziffern, neu nach 1 h ohne Event.
+- `fetch` wird injiziert (in der App `net.fetch`), damit Tests ohne Netzwerk laufen.
 
 ### 4.3 Einbindung
 
-- **`src/main/index.ts`:** `initTelemetry(APTABASE_APP_KEY)` vor `app.whenReady()`.
+- **`src/main/index.ts`:** baut die Telemetrie in `app.whenReady()` (dort sind `app.getLocale()` und `net.fetch` verfügbar) und reicht eine Factory an `registerIpc` weiter, die den Consent-Check aus dem Store bekommt.
 - **`src/main/ipc.ts`:**
   - `app_started`, sobald `encodersP` aufgelöst ist.
   - `probe_failed` im `catch` des `probe`-Handlers.
@@ -98,7 +103,7 @@ telemetry: 'on' | 'off'        // Standard 'on'
 telemetryNoticeSeen: boolean   // Standard false
 ```
 
-`loadStore` setzt fehlende oder ungültige Werte auf die Standards. `version` bleibt `1`. Der Enabled-Check in `ipc.ts` liest den gecachten Store: `(await getStore()).telemetry === 'on'`. `app_started` wird erst gesendet, nachdem der Store geladen ist, damit ein `'off'` auch beim Start greift.
+`loadStore` setzt fehlende Felder auf die Standards. Ein vorhandener, aber ungültiger `telemetry`-Wert wird als `'off'` gelesen (im Zweifel nicht senden). `store:setTelemetry` setzt zusätzlich `telemetryNoticeSeen = true`, damit der Hinweis nicht mehr „shares“ sagt, nachdem jemand im About-Dialog abgeschaltet hat. `version` bleibt `1`. Der Enabled-Check in `ipc.ts` liest den gecachten Store: `(await getStore()).telemetry === 'on'`. `app_started` wird erst gesendet, nachdem der Store geladen ist, damit ein `'off'` auch beim Start greift.
 
 ### 4.5 UI
 
@@ -112,14 +117,14 @@ telemetryNoticeSeen: boolean   // Standard false
 
 ## 5. Fehlerverhalten
 
-- Offline, DNS-Fehler, Timeout oder blockierte Firewall: Events gehen verloren, keine Fehlermeldung, kein Retry über das SDK hinaus.
+- Offline, DNS-Fehler, Timeout oder blockierte Firewall: Events gehen verloren, keine Fehlermeldung, kein Retry.
 - Kein Code-Pfad (Encode, Preview, Quit) wartet auf die Telemetrie. Der `before-quit`-Ablauf bleibt unverändert.
-- Dev-Builds (`!app.isPackaged`) werden vom SDK als Debug markiert und im Dashboard getrennt angezeigt.
+- Dev-Builds senden `isDebug: true` (`!app.isPackaged`) und erscheinen im Dashboard getrennt von Release-Daten.
 
 ## 6. Tests
 
 - **`src/shared/telemetry.test.ts`:** alle Bucket-Funktionen inklusive Grenzwerte, `presetProp` (eingebaut, eigen, unbekannt), `extProp` (bekannt, Großschreibung, unbekannt, ohne Endung), `modeProp`.
-- **`src/main/telemetry.test.ts`:** mit gemocktem SDK: `track` sendet bei aktivierter Telemetrie, sendet nicht bei `'off'`, verschluckt SDK-Fehler, No-op bei leerem Key.
+- **`src/main/telemetry.test.ts`:** mit gemocktem `fetch`: Key-Parsing, Payload-Form, sendet nicht bei `'off'`, verschluckt Netz- und Consent-Fehler, No-op bei ungültigem Key, Session-Wechsel nach 1 h.
 - **`src/main/store/presetStore.test.ts`:** alte Store-Datei ohne die neuen Felder lädt mit `'on'`/`false`, ungültige Werte fallen auf Standards zurück.
 - **Renderer-IPC-Allowlist:** `telemetry:track` mit einem Nicht-Promo-Namen sendet nichts.
 
