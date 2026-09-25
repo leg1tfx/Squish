@@ -37,4 +37,44 @@ describe('makePreview', () => {
     await makePreview(run, { info: info(134), settings: s, available: ['nvenc', 'cpu'] }, 'C:\\p')
     expect(calls.some((a) => a.includes('libx265'))).toBe(true)
   })
+
+  it('rounds the before sample to even dimensions', async () => {
+    const calls: string[][] = []
+    const run: Runner = async (a) => { calls.push(a); return { code: 0, stderrTail: '', aborted: false } }
+    await makePreview(run, { info: info(134), settings: s, available: ['cpu'] }, 'C:\\p')
+    const vf = calls[0][calls[0].indexOf('-vf') + 1]
+    expect(vf).toContain('scale=trunc(iw/2)*2:trunc(ih/2)*2')
+  })
+
+  it('deletes the after-raw temp file once the display copy is made', async () => {
+    const run: Runner = async () => ({ code: 0, stderrTail: '', aborted: false })
+    const removed: string[] = []
+    const remove = async (p: string): Promise<void> => { removed.push(p) }
+    await makePreview(run, { info: info(134), settings: s, available: ['cpu'] }, 'C:\\p', undefined, remove)
+    expect(removed.some((p) => /after-raw-\d+\.mp4$/.test(p))).toBe(true)
+  })
+
+  it('cleans up this preview\'s files when the before sample fails', async () => {
+    const run: Runner = async () => ({ code: 1, stderrTail: '', aborted: false })
+    const removed: string[] = []
+    const remove = async (p: string): Promise<void> => { removed.push(p) }
+    await expect(
+      makePreview(run, { info: info(134), settings: s, available: ['cpu'] }, 'C:\\p', undefined, remove)
+    ).rejects.toThrow('Preview failed (before).')
+    expect(removed.some((p) => /before-\d+\.mp4$/.test(p))).toBe(true)
+    expect(removed.some((p) => /after-raw-\d+\.mp4$/.test(p))).toBe(true)
+    expect(removed.some((p) => /(?<!raw-)after-\d+\.mp4$/.test(p))).toBe(true)
+  })
+
+  it('cleans up this preview\'s files when every after attempt fails', async () => {
+    const run: Runner = async (a) => ({ code: a.includes('libx264') ? 0 : 1, stderrTail: '', aborted: false })
+    const removed: string[] = []
+    const remove = async (p: string): Promise<void> => { removed.push(p) }
+    await expect(
+      makePreview(run, { info: info(134), settings: s, available: ['cpu'] }, 'C:\\p', undefined, remove)
+    ).rejects.toThrow('Preview failed (after).')
+    expect(removed.some((p) => /before-\d+\.mp4$/.test(p))).toBe(true)
+    expect(removed.some((p) => /after-raw-\d+\.mp4$/.test(p))).toBe(true)
+    expect(removed.some((p) => /(?<!raw-)after-\d+\.mp4$/.test(p))).toBe(true)
+  })
 })
