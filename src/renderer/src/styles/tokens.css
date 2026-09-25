@@ -1,0 +1,13 @@
+:root {
+  --ground: #0b1416; --surface: #111d20; --surface-raised: #172629; --surface-sunken: #081012;
+  --hairline: #22363b; --rule: #587479;
+  --ink: #eef2ee; --ink-2: #bccaca; --ink-3: #8fa3a6;
+  --gold: #d4af37; --gold-hover: #f0d27a; --gold-press: #b8942a; --on-gold: #16120a; --gold-text: #e2bf55;
+  --gold-wash: rgba(212, 175, 55, 0.14); --gold-line: rgba(212, 175, 55, 0.42);
+  --ember: #e8703f; --circuit: #4fd6c0; --positive: #7fd3a0; --negative: #ff8a70;
+  --focus: #f0d27a; --scrim: rgba(5, 10, 11, 0.72);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --radius-xs: 4px; --radius-sm: 8px; --radius-md: 12px;
+}

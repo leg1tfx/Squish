@@ -1,0 +1,39 @@
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: transparent; }
+button:disabled { cursor: not-allowed; opacity: 0.4; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); }
+.display { font-family: var(--font-display); font-weight: 600; }
+.kicker { font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.16em; color: var(--gold-text); text-transform: uppercase; }
+.app { height: 100%; display: flex; flex-direction: column; }
+.screen { flex: 1; min-height: 0; }
+
+.titlebar { height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding-left: 16px; border-bottom: 1px solid var(--hairline); -webkit-app-region: drag; }
+.titlebar .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+.titlebar .ctl { display: flex; align-items: center; -webkit-app-region: no-drag; }
+.titlebar .ctl button { width: 46px; height: 44px; display: grid; place-items: center; transition: background-color 150ms ease-out; }
+.titlebar .ctl button:hover { background: var(--surface-raised); }
+.titlebar .ctl .close:hover { background: #c42b1c; }
+.titlebar .about { width: auto !important; padding: 0 12px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+
+.btn { height: 48px; padding: 0 24px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: 0.02em; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+.btn-gold { background: var(--gold); color: var(--on-gold); }
+.btn-gold:hover { background: var(--gold-hover); }
+.btn-ghost { border: 1px solid var(--rule); color: var(--ink); }
+.btn-ghost:hover { border-color: var(--ink-2); }
+.link-btn { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--gold-text); }
+.link-btn:hover { color: var(--gold-hover); }
+
+.seg { position: relative; display: grid; padding: 3px; background: var(--surface-sunken); border: 1px solid var(--hairline); border-radius: var(--radius-sm); }
+.seg-opt { position: relative; height: 26px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--ink-3); transition: color 150ms ease-out; }
+.seg-opt[aria-checked='true'] { color: var(--ink); }
+.seg-opt:not(:disabled):hover { color: var(--ink); }
+.seg-ind { position: absolute; inset: 0; border-radius: 6px; background: var(--surface-raised); }
+.seg-label { position: relative; }
+
+.field { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--hairline); background: var(--surface-sunken); font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+.field input, .field select { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; font: inherit; outline: none; }
+.field select option { background: var(--surface); }
+.field input::-webkit-inner-spin-button { -webkit-appearance: none; }
