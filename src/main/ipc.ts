@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { FFMPEG_SOURCE_URL, PROMO_URL } from '@shared/links'
 import type { EncodeOutcome, PreviewResult, ProbeResult } from '@shared/api'
 import type { EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from '@shared/types'
+import { VIDEO_EXTENSIONS } from '@shared/telemetry'
 import { detectEncoders } from './ffmpeg/encoders'
 import { probeFile } from './ffmpeg/probe'
 import { createRunner } from './ffmpeg/runner'
@@ -33,7 +34,7 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
 
   ipcMain.handle('file:open', async () => {
     const w = getWindow()
-    const r = await dialog.showOpenDialog(w!, { properties: ['openFile'], filters: [{ name: 'Video', extensions: ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', 'mts', 'm2ts', 'wmv'] }] })
+    const r = await dialog.showOpenDialog(w!, { properties: ['openFile'], filters: [{ name: 'Video', extensions: [...VIDEO_EXTENSIONS] }] })
     return r.canceled ? null : r.filePaths[0]
   })
 
