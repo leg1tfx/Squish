@@ -5,17 +5,18 @@
 Installed copies check for updates at start and every 6 hours, download in the background,
 and install on the next quit (or right away via "Update ready · Restart" in the title bar).
 
+Use the release dashboard: `npm run dashboard` opens it in the browser. It shows the version customers have,
+and walks through three buttons: new version number → build installer → publish.
+
 One-time setup (Cloudflare dashboard, no server needed):
 1. R2 Object Storage → Create bucket, name it `pynos-updates`. R2 asks for a payment method once; the free tier (10 GB, no download fees) covers this easily.
 2. Open the bucket → Settings → Custom Domains → Connect Domain → `updates.pynos-ae-suite.de`.
-3. In the bucket, create a folder `squish`.
+3. R2 Object Storage → Manage API tokens → Create API token with **Object Read & Write** for that bucket.
+4. `npm run dashboard` → "Einstellungen: Cloudflare R2" → enter Account ID, bucket name, Access Key ID and Secret. They are saved only in `.release-secrets.json` (git-ignored).
 
-Each update:
-1. Raise `version` in `package.json` (e.g. `1.0.0` → `1.0.1`). Customers only get versions higher than theirs.
-2. `npm run dist`.
-3. In the bucket's `squish` folder, upload these three files from `release/`: `Pynos-Squish-Setup-<version>.exe`, `Pynos-Squish-Setup-<version>.exe.blockmap` and `latest.yml`. Upload `latest.yml` **last**, and replace the old one. You can delete the previous .exe and .blockmap afterwards.
-4. Check `https://updates.pynos-ae-suite.de/squish/latest.yml` in the browser shows the new version.
-5. Test: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
+After publishing, test once: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
+
+Manual fallback without the dashboard: raise `version` in `package.json`, `npm run dist`, then upload `Pynos-Squish-Setup-<version>.exe`, its `.blockmap` and `latest.yml` (last) from `release/` into the bucket's `squish/` folder.
 
 ## Every release
 

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squish Updates</title>
+<style>
+  :root {
+    --ground: #0b1416; --surface: #111d20; --surface-raised: #172629; --surface-sunken: #081012;
+    --hairline: #22363b; --rule: #587479;
+    --ink: #eef2ee; --ink-2: #bccaca; --ink-3: #8fa3a6;
+    --gold: #d4af37; --gold-hover: #f0d27a; --on-gold: #16120a; --gold-text: #e2bf55;
+    --gold-wash: rgba(212, 175, 55, 0.14); --gold-line: rgba(212, 175, 55, 0.42);
+    --positive: #7fd3a0; --negative: #ff8a70; --focus: #f0d27a;
+    --font-display: Georgia, 'Times New Roman', serif;
+    --font-body: system-ui, 'Segoe UI', sans-serif;
+    --font-mono: ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.5 var(--font-body); }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; display: flex; flex-direction: column; gap: 16px; }
+  h1 { font: 600 26px/1.2 var(--font-display); margin: 0; }
+  .sub { color: var(--ink-3); margin: 4px 0 8px; }
+  .kicker { font: 500 11px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+  .card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .card h2 { margin: 0; font: 600 17px/1.3 var(--font-body); display: flex; align-items: center; gap: 10px; }
+  .num { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font: 600 12px var(--font-mono); background: var(--surface-raised); color: var(--ink-2); border: 1px solid var(--hairline); flex-shrink: 0; }
+  .card.done .num { background: var(--positive); color: var(--on-gold); border-color: transparent; }
+  .card.active { border-color: var(--gold-line); }
+  .card.active .num { background: var(--gold); color: var(--on-gold); border-color: transparent; }
+  p { margin: 0; color: var(--ink-2); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat { background: var(--surface-sunken); border: 1px solid var(--hairline); border-radius: 8px; padding: 14px 16px; }
+  .stat .v { font: 600 28px/1.2 var(--font-mono); margin-top: 6px; }
+  .stat .note { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: 500 13px var(--font-mono); letter-spacing: 0.02em; height: 40px; padding: 0 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--rule); background: transparent; color: var(--ink); }
+  button:hover:not(:disabled) { border-color: var(--ink-2); }
+  button.gold { background: var(--gold); color: var(--on-gold); border-color: transparent; }
+  button.gold:hover:not(:disabled) { background: var(--gold-hover); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  input { height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--surface-sunken); color: var(--ink); font: 13px var(--font-mono); width: 100%; }
+  .files { list-style: none; margin: 0; padding: 0; font: 12px/1.9 var(--font-mono); color: var(--ink-2); }
+  .files li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--hairline); }
+  .files li:last-child { border-bottom: 0; }
+  .files .miss { color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-3); }
+  .msg { font-size: 13px; padding: 10px 12px; border-radius: 8px; }
+  .msg.err { background: rgba(255, 138, 112, 0.1); color: var(--negative); }
+  .msg.ok { background: rgba(127, 211, 160, 0.1); color: var(--positive); }
+  .msg.info { background: var(--gold-wash); color: var(--gold-text); }
+  pre { margin: 0; max-height: 280px; overflow: auto; background: var(--surface-sunken); border: 1px solid var(--hairline); border-radius: 8px; padding: 12px; font: 12px/1.6 var(--font-mono); color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
+  details summary { cursor: pointer; font: 600 15px var(--font-body); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: '＋'; color: var(--ink-3); }
+  details[open] summary::after { content: '－'; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--ink-3); }
+  ol.help { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: 13px; }
+  a { color: var(--gold-text); }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s 0.8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  @media (max-width: 560px) { .stats, .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <div class="kicker">Pyno's Squish</div>
+    <h1>Update veröffentlichen</h1>
+    <p class="sub">Drei Schritte, dann bekommen alle Kunden die neue Version automatisch.</p>
+  </div>
+
+  <section class="card">
+    <div class="stats">
+      <div class="stat"><div class="kicker">Bei den Kunden</div><div class="v" id="live">…</div><div class="note" id="liveNote"></div></div>
+      <div class="stat"><div class="kicker">Hier auf dem PC</div><div class="v" id="local">…</div><div class="note" id="localNote"></div></div>
+    </div>
+  </section>
+
+  <div id="configMsg"></div>
+
+  <section class="card" id="step1">
+    <h2><span class="num">1</span>Neue Versionsnummer</h2>
+    <p id="step1Text">Jede Veröffentlichung braucht eine höhere Nummer als die, die Kunden schon haben.</p>
+    <div class="row" id="bumpRow"></div>
+    <div class="row"><input id="customVersion" placeholder="eigene Nummer, z. B. 1.2.0" style="max-width:260px"><button id="customBtn">Übernehmen</button></div>
+    <div id="step1Msg"></div>
+  </section>
+
+  <section class="card" id="step2">
+    <h2><span class="num">2</span>Installer bauen</h2>
+    <p>Prüft und baut die App. Das dauert ein paar Minuten.</p>
+    <ul class="files" id="files"></ul>
+    <div class="row"><button class="gold" id="buildBtn">Installer bauen</button></div>
+  </section>
+
+  <section class="card" id="step3">
+    <h2><span class="num">3</span>Veröffentlichen</h2>
+    <p id="step3Text">Lädt die drei Dateien zu Cloudflare hoch. Die Kunden-Apps finden das Update beim nächsten Start.</p>
+    <div class="row"><button class="gold" id="uploadBtn">Jetzt veröffentlichen</button></div>
+    <div class="hint" id="uploadHint"></div>
+  </section>
+
+  <section class="card" id="logCard" hidden>
+    <div class="row" style="justify-content:space-between"><h2 id="logTitle">Protokoll</h2></div>
+    <pre id="log"></pre>
+  </section>
+
+  <section class="card">
+    <details id="settings">
+      <summary>Einstellungen: Cloudflare R2</summary>
+      <ol class="help" style="margin-top:12px">
+        <li>Cloudflare-Dashboard → <b>R2 Object Storage</b> → <b>Manage API tokens</b> → <b>Create API token</b>.</li>
+        <li>Rechte: <b>Object Read &amp; Write</b>, nur für deinen Bucket.</li>
+        <li>Die angezeigten Werte hier eintragen. Die Account-ID steht in der Endpoint-Adresse vor <code>.r2.cloudflarestorage.com</code>.</li>
+      </ol>
+      <form id="settingsForm">
+        <div class="grid">
+          <label>Account-ID<input name="accountId" autocomplete="off"></label>
+          <label>Bucket-Name<input name="bucket" autocomplete="off" placeholder="pynos-updates"></label>
+          <label>Access Key ID<input name="accessKeyId" autocomplete="off"></label>
+          <label>Secret Access Key<input name="secretAccessKey" type="password" autocomplete="off"></label>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="gold" type="submit">Speichern &amp; testen</button><span class="hint">Wird nur lokal in <code>.release-secrets.json</code> gespeichert.</span></div>
+        <div id="settingsMsg" style="margin-top:12px"></div>
+      </form>
+    </details>
+  </section>
+</main>
+<script>
+const TOKEN = '__TOKEN__'
+const $ = (id) => document.getElementById(id)
+let s = null
+let settingsFilled = false
+
+const post = async (path, data) => {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-dash-token': TOKEN }, body: JSON.stringify(data || {}) })
+  const j = await r.json()
+  if (!r.ok) throw new Error(j.error || 'Fehler')
+  return j
+}
+const msg = (el, kind, text) => { el.innerHTML = ''; if (!text) return; const d = document.createElement('div'); d.className = 'msg ' + kind; d.textContent = text; el.append(d) }
+const cmp = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0) ? -1 : 1 } return 0 }
+const bump = (v, part) => { let [a, b, c] = v.split('.').map(Number); if (part === 'major') return `${a + 1}.0.0`; if (part === 'minor') return `${a}.${b + 1}.0`; return `${a}.${b}.${c + 1}` }
+const mb = (n) => n == null ? 'fehlt' : n < 1e6 ? Math.ceil(n / 1e3) + ' KB' : (n / 1e6).toFixed(1) + ' MB'
+
+async function refresh() {
+  s = await (await fetch('/api/state')).json()
+  render()
+  if (s.job?.running) setTimeout(refresh, 1000)
+}
+
+function render() {
+  const running = !!s.job?.running
+  const live = s.live.version
+  $('live').textContent = live ?? (s.live.error ? '?' : '–')
+  $('liveNote').textContent = s.live.error ? `Nicht erreichbar (${s.live.error})` : live ? 'online unter ' + s.feed.replace('https://', '') : 'noch nichts veröffentlicht'
+  $('local').textContent = s.version
+  const newer = !live || cmp(s.version, live) > 0
+  $('localNote').textContent = newer ? (live ? 'neuer als online' : 'bereit für die erste Veröffentlichung') : 'gleich wie online, bitte erhöhen'
+
+  if (!s.config.configured) msg($('configMsg'), 'info', 'Zuerst unten unter „Einstellungen“ den Cloudflare-R2-Zugang eintragen. Das ist nur einmal nötig.')
+  else $('configMsg').innerHTML = ''
+  if (!s.config.configured && !settingsFilled) $('settings').open = true
+  if (!settingsFilled) {
+    const f = $('settingsForm')
+    f.accountId.value = s.config.accountId; f.bucket.value = s.config.bucket || 'pynos-updates'; f.accessKeyId.value = s.config.accessKeyId
+    f.secretAccessKey.placeholder = s.config.hasSecret ? 'gespeichert (leer lassen)' : ''
+    settingsFilled = true
+  }
+
+  // Step 1
+  const base = live && cmp(live, s.version) > 0 ? live : s.version
+  const row = $('bumpRow'); row.innerHTML = ''
+  if (!newer) {
+    for (const [part, label] of [['patch', 'Kleine Korrektur'], ['minor', 'Neue Funktion'], ['major', 'Große Version']]) {
+      const b = document.createElement('button'); const v = bump(base, part)
+      b.textContent = `${v} · ${label}`; if (part === 'patch') b.className = 'gold'
+      b.disabled = running; b.onclick = () => setVersion(v); row.append(b)
+    }
+  }
+  $('step1Text').textContent = newer ? `Version ${s.version} ist bereit. Nur ändern, wenn du eine andere Nummer willst.` : 'Jede Veröffentlichung braucht eine höhere Nummer als die, die Kunden schon haben. Wähle eine:'
+  $('customBtn').disabled = running
+
+  // Step 2
+  const files = $('files'); files.innerHTML = ''
+  for (const f of s.build.files) {
+    const li = document.createElement('li'); const n = document.createElement('span'); const z = document.createElement('span')
+    const stale = f.name === 'latest.yml' && f.size != null && s.build.ymlVersion !== s.version
+    n.textContent = f.name; z.textContent = stale ? `alt (${s.build.ymlVersion ?? '?'})` : mb(f.size); if (f.size == null || stale) z.className = 'miss'
+    li.append(n, z); files.append(li)
+  }
+  const built = s.build.ready
+  $('buildBtn').disabled = running || !newer
+  $('buildBtn').textContent = built ? 'Neu bauen' : 'Installer bauen'
+  $('buildBtn').className = built ? '' : 'gold'
+
+  // Step 3
+  const canUpload = s.config.configured && built && newer && !running
+  $('uploadBtn').disabled = !canUpload
+  $('uploadHint').textContent = running ? '' : !newer ? 'Erst Schritt 1: Versionsnummer erhöhen.' : !built ? 'Erst Schritt 2: Installer bauen.' : !s.config.configured ? 'Erst den R2-Zugang in den Einstellungen eintragen.' : `Veröffentlicht Version ${s.version}.`
+
+  const step = !newer ? 1 : !built ? 2 : 3
+  ;[1, 2, 3].forEach((i) => { const c = $('step' + i); c.classList.toggle('active', i === step && !running); c.classList.toggle('done', i < step) })
+
+  // Log
+  if (s.job) {
+    $('logCard').hidden = false
+    const names = { build: 'Bauen', upload: 'Veröffentlichen' }
+    $('logTitle').innerHTML = ''
+    const t = document.createElement('span')
+    if (running) { const sp = document.createElement('span'); sp.className = 'spin'; t.append(sp) }
+    t.append(`${names[s.job.name]}: ${running ? 'läuft …' : s.job.ok ? 'fertig ✓' : 'fehlgeschlagen'}`)
+    t.style.color = running ? 'var(--gold-text)' : s.job.ok ? 'var(--positive)' : 'var(--negative)'
+    $('logTitle').append(t)
+    const pre = $('log'); const atEnd = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20
+    pre.textContent = s.job.log.join('\n')
+    if (atEnd) pre.scrollTop = pre.scrollHeight
+  }
+}
+
+async function setVersion(v) {
+  try { await post('/api/version', { version: v }); msg($('step1Msg'), 'ok', `Version ist jetzt ${v}.`); $('customVersion').value = '' }
+  catch (e) { msg($('step1Msg'), 'err', e.message) }
+  refresh()
+}
+$('customBtn').onclick = () => setVersion($('customVersion').value.trim())
+$('buildBtn').onclick = async () => { try { await post('/api/build') } catch (e) { alert(e.message) } refresh() }
+$('uploadBtn').onclick = async () => {
+  if (!confirm(`Version ${s.version} jetzt für alle Kunden veröffentlichen?`)) return
+  try { await post('/api/upload') } catch (e) { alert(e.message) } refresh()
+}
+$('settingsForm').onsubmit = async (e) => {
+  e.preventDefault()
+  const f = e.target
+  msg($('settingsMsg'), 'info', 'Teste Verbindung …')
+  try {
+    await post('/api/settings', { accountId: f.accountId.value, bucket: f.bucket.value, accessKeyId: f.accessKeyId.value, secretAccessKey: f.secretAccessKey.value })
+    f.secretAccessKey.value = ''; f.secretAccessKey.placeholder = 'gespeichert (leer lassen)'
+    msg($('settingsMsg'), 'ok', 'Verbindung klappt. Gespeichert.')
+  } catch (err) { msg($('settingsMsg'), 'err', err.message) }
+  refresh()
+}
+refresh()
+setInterval(() => { if (!s?.job?.running) refresh() }, 15000)
+</script>
+</body>
+</html>
