@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Preset } from '@shared/types'
 import { snappy } from '../motion'
 
@@ -12,6 +12,21 @@ export function PresetChips(p: Props) {
   const [menu, setMenu] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const menuElRef = useRef<HTMLSpanElement | null>(null)
+  const focusActiveOnUpdate = useRef(false)
+
+  useEffect(() => {
+    if (menu !== null) {
+      menuElRef.current?.querySelector<HTMLButtonElement>('button[role="menuitem"]')?.focus()
+    }
+  }, [menu])
+
+  useEffect(() => {
+    if (focusActiveOnUpdate.current) {
+      focusActiveOnUpdate.current = false
+      refs.current[p.activeId]?.focus()
+    }
+  }, [p.activeId, p.presets])
 
   const move = (from: number, dir: 1 | -1): void => {
     const n = p.presets.length
@@ -26,6 +41,11 @@ export function PresetChips(p: Props) {
     const trimmed = value.trim()
     if (trimmed.length > 0) p.onRename(id, trimmed)
     setRenaming(null)
+  }
+
+  const closeMenuReturnFocus = (id: string): void => {
+    setMenu(null)
+    refs.current[id]?.focus()
   }
 
   return (
@@ -48,7 +68,8 @@ export function PresetChips(p: Props) {
             onKeyDown={(e) => {
               if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); move(i, -1) }
               else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); move(i, 1) }
-              else if (e.key === 'Escape' && menu === x.id) { e.stopPropagation(); setMenu(null) }
+              else if (e.key === 'Escape' && menu === x.id) { e.stopPropagation(); closeMenuReturnFocus(x.id) }
+              else if (!x.builtIn && (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey))) { e.preventDefault(); setMenu(x.id) }
             }}
             onContextMenu={(e) => { if (!x.builtIn) { e.preventDefault(); setMenu(menu === x.id ? null : x.id) } }}
             style={{ position: 'relative', height: 32, padding: '0 12px', borderRadius: 999, border: '1px solid var(--hairline)', fontSize: 13, fontWeight: 500, color: on ? 'var(--gold-text)' : x.builtIn ? 'var(--ink-2)' : 'var(--ink)' }}>
@@ -56,11 +77,11 @@ export function PresetChips(p: Props) {
             <span style={{ position: 'relative' }}>{x.builtIn ? '' : '★ '}{x.label}{on && p.edited ? ' · edited' : ''}</span>
             <AnimatePresence>
               {menu === x.id && (
-                <motion.span role="menu" initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={snappy}
-                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setMenu(null) } }}
+                <motion.span ref={menuElRef} role="menu" initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={snappy}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenuReturnFocus(x.id) } }}
                   style={{ position: 'absolute', top: 36, left: 0, zIndex: 5, display: 'flex', flexDirection: 'column', padding: 4, borderRadius: 8, background: 'var(--surface-raised)', border: '1px solid var(--hairline)' }}>
                   <button type="button" role="menuitem" onClick={(e) => { e.stopPropagation(); setMenu(null); setRenaming(x.id) }} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--ink)', background: 'transparent', border: 0 }}>Rename</button>
-                  <button type="button" role="menuitem" onClick={(e) => { e.stopPropagation(); setMenu(null); p.onDelete(x.id) }} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--negative)', background: 'transparent', border: 0 }}>Delete</button>
+                  <button type="button" role="menuitem" onClick={(e) => { e.stopPropagation(); setMenu(null); focusActiveOnUpdate.current = true; p.onDelete(x.id) }} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--negative)', background: 'transparent', border: 0 }}>Delete</button>
                 </motion.span>
               )}
             </AnimatePresence>

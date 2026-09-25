@@ -20,6 +20,11 @@ export function Segmented<T extends string>(p: {
     }
   }
 
+  const selectedIdx = p.options.findIndex((o) => o.value === p.value)
+  const selectedEnabled = selectedIdx !== -1 && !p.options[selectedIdx].disabled
+  const firstEnabledIdx = p.options.findIndex((o) => !o.disabled)
+  const tabbableIdx = selectedEnabled ? selectedIdx : firstEnabledIdx
+
   return (
     <div role="radiogroup" aria-label={p.label} className="seg" style={{ gridTemplateColumns: `repeat(${p.options.length}, minmax(0, 1fr))` }}>
       {p.options.map((o, i) => (
@@ -29,7 +34,7 @@ export function Segmented<T extends string>(p: {
           role="radio"
           aria-checked={o.value === p.value}
           disabled={o.disabled}
-          tabIndex={o.value === p.value ? 0 : -1}
+          tabIndex={i === tabbableIdx ? 0 : -1}
           className="seg-opt"
           onClick={() => p.onChange(o.value)}
           onKeyDown={(e) => {
