@@ -22,6 +22,31 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+function DraftNumberInput(p: {
+  value: string; disabled?: boolean; ariaLabel: string; step?: number; min?: number; align?: 'right'; onCommit: (n: number) => void
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  return (
+    <input
+      type="number"
+      step={p.step}
+      min={p.min}
+      disabled={p.disabled}
+      aria-label={p.ariaLabel}
+      value={draft ?? p.value}
+      style={p.align === 'right' ? { textAlign: 'right' } : undefined}
+      onFocus={() => setDraft(p.value)}
+      onChange={(e) => {
+        const raw = e.target.value
+        setDraft(raw)
+        const n = Number(raw)
+        if (raw.trim() !== '' && Number.isFinite(n) && n > 0) p.onCommit(n)
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  )
+}
+
 export function SettingsScreen() {
   const s = useSquish()
   const [saving, setSaving] = useState<string | null>(null)
@@ -94,8 +119,8 @@ export function SettingsScreen() {
                 onChange={(v) => s.edit({ maxMB: v === 'auto' ? null : settings.maxMB ?? 50 })}
                 options={[{ value: 'auto', label: 'Auto' }, { value: 'max', label: 'Max size' }]} />
               <label className="field" style={{ opacity: settings.maxMB === null ? 0.5 : 1 }}>
-                <input type="number" min={1} disabled={settings.maxMB === null} aria-label="Max size in MB" value={settings.maxMB ?? 50}
-                  onChange={(e) => { const v = Number(e.target.value); if (v > 0) s.edit({ maxMB: v }) }} style={{ textAlign: 'right' }} />
+                <DraftNumberInput value={String(settings.maxMB ?? 50)} disabled={settings.maxMB === null} ariaLabel="Max size in MB" min={1} align="right"
+                  onCommit={(v) => s.edit({ maxMB: v })} />
                 <span style={{ color: 'var(--ink-3)' }}>MB</span>
               </label>
             </div>
@@ -110,9 +135,9 @@ export function SettingsScreen() {
           </Row>
           <Row label="Bitrate">
             <label className="field">
-              <input type="number" step={0.1} min={0.1} aria-label="Video bitrate in Mbit/s" disabled={settings.maxMB !== null}
+              <DraftNumberInput step={0.1} min={0.1} ariaLabel="Video bitrate in Mbit/s" disabled={settings.maxMB !== null}
                 value={(plan.videoKbps / 1000).toFixed(1)}
-                onChange={(e) => { const v = Number(e.target.value); if (v > 0) s.edit({ bitrateKbps: Math.round(v * 1000) }) }} />
+                onCommit={(v) => s.edit({ bitrateKbps: Math.round(v * 1000) })} />
               <span style={{ color: 'var(--ink-3)' }}>Mbit/s · {plan.mode === 'target' ? 'from size' : plan.mode === 'bitrate' ? 'manual' : 'auto'}</span>
               {plan.mode === 'bitrate' && <button className="link-btn" aria-label="Back to automatic bitrate" onClick={() => s.edit({ bitrateKbps: null })}>×</button>}
             </label>
