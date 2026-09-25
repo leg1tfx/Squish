@@ -1,6 +1,6 @@
 import { motion, useAnimationControls } from 'motion/react'
-import { useEffect, useState, type DragEvent } from 'react'
-import { bouncy, pressProps, smooth } from '../motion'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { bouncy, pressProps, snappy } from '../motion'
 import { useSquish } from '../state/store'
 
 export function DropScreen() {
@@ -8,6 +8,7 @@ export function DropScreen() {
   const error = useSquish((s) => s.dropError)
   const nonce = useSquish((s) => s.dropNonce)
   const [over, setOver] = useState(false)
+  const dragDepth = useRef(0)
   const shake = useAnimationControls()
 
   useEffect(() => { if (nonce > 0) void shake.start({ x: [0, -12, 12, -8, 8, -4, 0], transition: { duration: 0.45 } }) }, [nonce, shake])
@@ -19,8 +20,18 @@ export function DropScreen() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
+  const onDragEnter = (e: DragEvent): void => {
+    e.preventDefault()
+    dragDepth.current += 1
+    setOver(true)
+  }
+  const onDragLeave = (e: DragEvent): void => {
+    e.preventDefault()
+    dragDepth.current = Math.max(0, dragDepth.current - 1)
+    if (dragDepth.current === 0) setOver(false)
+  }
   const onDrop = (e: DragEvent): void => {
-    e.preventDefault(); setOver(false)
+    e.preventDefault(); dragDepth.current = 0; setOver(false)
     const f = e.dataTransfer.files[0]
     if (f) void openFile(window.squish.pathForFile(f))
   }
@@ -28,10 +39,14 @@ export function DropScreen() {
   return (
     <div style={{ height: '100%', padding: 32, display: 'flex' }}>
       <motion.div
-        animate={shake} onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={onDrop}
+        animate={shake} onDragOver={(e) => e.preventDefault()} onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDrop={onDrop}
         onClick={() => void choose()} role="button" tabIndex={0} aria-label="Drop a video or choose a file"
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') void choose() }}
-        whileHover={{ scale: 1.006 }} transition={smooth}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter') void choose()
+          else if (e.key === ' ') { e.preventDefault(); void choose() }
+        }}
+        whileHover={{ scale: 1.006 }} transition={snappy}
         style={{
           flex: 1, position: 'relative', borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
           border: `1px ${over ? 'solid' : 'dashed'} ${over ? 'var(--gold)' : 'var(--gold-line)'}`,
@@ -52,7 +67,7 @@ export function DropScreen() {
           {over ? 'Let go.' : 'Drop your video here.'}
         </h1>
         {error && <div role="alert" className="mono" style={{ fontSize: 13, color: 'var(--negative)' }}>{error}</div>}
-        <motion.button className="btn btn-gold" {...pressProps} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        <motion.button className="btn btn-gold" {...pressProps} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1, transition: bouncy }}
           onClick={(e) => { e.stopPropagation(); void choose() }}>Choose file</motion.button>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 'auto 0 0 0', height: 14, background: 'repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px 12px) 0 100% / 100% 6px repeat-x, repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 96px) 0 100% / 100% 12px repeat-x' }} />
       </motion.div>
