@@ -15,13 +15,18 @@ import { mediaUrl } from './media'
 import { addPreset, deletePreset, loadStore, renamePreset, saveStore } from './store/presetStore'
 
 export interface IpcEnv { ffmpeg: string; ffprobe: string; tmpDir: string; mediaDir: string; storeFile: string }
+export interface IpcHandle { shutdown(): Promise<void> }
 
-export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null): void {
+const SHUTDOWN_TIMEOUT_MS = 5000
+
+export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null): IpcHandle {
   const run = createRunner(env.ffmpeg)
   const encodersP: Promise<EncoderId[]> = detectEncoders(run).catch(() => ['cpu'])
   let info: VideoInfo | null = null
   let job: AbortController | null = null
   let store: StoreData | null = null
+  let encodeInFlight: Promise<unknown> | null = null
+  let previewInFlight: Promise<unknown> | null = null
   const getStore = async (): Promise<StoreData> => (store ??= await loadStore(env.storeFile))
   const setStore = async (d: StoreData): Promise<StoreData> => { store = d; await saveStore(env.storeFile, d); return d }
   const send = (ch: string, payload: unknown): void => getWindow()?.webContents.send(ch, payload)
@@ -47,7 +52,7 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
 
   ipcMain.handle('encoders', () => encodersP)
 
-  ipcMain.handle('preview', async (_e, settings: Settings): Promise<PreviewResult> => {
+  async function doPreview(settings: Settings): Promise<PreviewResult> {
     if (!info) return { ok: false, message: 'No video loaded.' }
     try {
       await mkdir(env.mediaDir, { recursive: true })
@@ -56,9 +61,17 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
     } catch (e) {
       return { ok: false, message: (e as Error).message }
     }
+  }
+
+  ipcMain.handle('preview', (_e, settings: Settings) => {
+    const p = doPreview(settings)
+    previewInFlight = p
+    void p.finally(() => { if (previewInFlight === p) previewInFlight = null })
+    return p
   })
 
-  ipcMain.handle('encode', async (_e, settings: Settings): Promise<EncodeOutcome> => {
+  async function doEncode(settings: Settings): Promise<EncodeOutcome> {
+    if (job) return { ok: false, kind: 'ffmpeg', message: 'An encode is already running.', log: '' }
     if (!info) return { ok: false, kind: 'ffmpeg', message: 'No video loaded.', log: '' }
     job = new AbortController()
     await mkdir(env.tmpDir, { recursive: true })
@@ -77,6 +90,13 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
     } finally {
       job = null
     }
+  }
+
+  ipcMain.handle('encode', (_e, settings: Settings) => {
+    const p = doEncode(settings)
+    encodeInFlight = p
+    void p.finally(() => { if (encodeInFlight === p) encodeInFlight = null })
+    return p
   })
 
   ipcMain.handle('cancel', () => { job?.abort() })
@@ -96,6 +116,18 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
   ipcMain.on('win:minimize', () => getWindow()?.minimize())
   ipcMain.on('win:toggleMaximize', () => { const w = getWindow(); if (w) w.isMaximized() ? w.unmaximize() : w.maximize() })
   ipcMain.on('win:close', () => getWindow()?.close())
+
+  async function shutdown(): Promise<void> {
+    job?.abort()
+    const inFlight = [encodeInFlight, previewInFlight].filter((p): p is Promise<unknown> => p !== null)
+    if (inFlight.length === 0) return
+    await Promise.race([
+      Promise.all(inFlight).then(() => {}),
+      new Promise<void>((resolve) => setTimeout(resolve, SHUTDOWN_TIMEOUT_MS))
+    ])
+  }
+
+  return { shutdown }
 }
 
 export async function cleanupTemp(dir: string): Promise<void> {

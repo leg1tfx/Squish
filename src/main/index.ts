@@ -11,6 +11,7 @@ app.setAppUserModelId('com.pynos.squish')
 protocol.registerSchemesAsPrivileged([{ scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } }])
 
 let win: BrowserWindow | null = null
+let quitting = false
 const tmpRoot = join(app.getPath('temp'), 'pynos-squish', String(process.pid))
 const env = {
   ffmpeg: binPath('ffmpeg', { packaged: app.isPackaged, resourcesPath: process.resourcesPath, appPath: app.getAppPath() }),
@@ -42,8 +43,14 @@ app.whenReady().then(() => {
     const file = mediaFileFor(req.url, env.mediaDir)
     return file ? net.fetch(pathToFileURL(file).toString()) : new Response('Not found', { status: 404 })
   })
-  registerIpc(env, () => win)
+  const ipc = registerIpc(env, () => win)
+  app.on('before-quit', (e) => {
+    if (!quitting) {
+      e.preventDefault()
+      quitting = true
+      void ipc.shutdown().then(() => cleanupTemp(tmpRoot)).finally(() => app.exit(0))
+    }
+  })
   createWindow()
 })
 app.on('window-all-closed', () => app.quit())
-app.on('will-quit', () => { void cleanupTemp(tmpRoot) })
