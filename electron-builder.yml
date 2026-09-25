@@ -22,3 +22,11 @@ nsis:
   allowToChangeInstallationDirectory: true
   shortcutName: "Pyno's Squish"
   uninstallDisplayName: "Pyno's Squish"
+# Auto-update feed. The source repo is private, so installers are published to a
+# separate public repo that holds only releases (no code). Customers' apps read
+# latest.yml from its newest release.
+publish:
+  provider: github
+  owner: leg1tfx
+  repo: squish-releases
+  releaseType: release

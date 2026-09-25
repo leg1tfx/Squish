@@ -1,5 +1,24 @@
 # Release checklist
 
+## Shipping an update to customers
+
+Installed copies check for updates at start and every 6 hours, download in the background,
+and install on the next quit (or right away via "Update ready · Restart" in the title bar).
+
+One-time setup:
+- Create the **public** repo `leg1tfx/squish-releases` on GitHub (empty; it only holds releases).
+- Create a GitHub token with write access to that repo (fine-grained: Contents read/write).
+
+Each update:
+1. Raise `version` in `package.json` (e.g. `1.0.0` → `1.0.1`). Customers only get versions higher than theirs.
+2. `set GH_TOKEN=<token>` (PowerShell: `$env:GH_TOKEN="<token>"`), then `npm run release`.
+3. This uploads `Pynos-Squish-Setup-<version>.exe`, its `.blockmap` and `latest.yml` to a release on `squish-releases`. Do not delete or rename `latest.yml`; the apps read it.
+4. Test: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
+
+`npm run dist` still builds locally without publishing.
+
+## Every release
+
 - [ ] `PROMO_URL` in `src/shared/links.ts` points to Pyno's Payhip store (confirmed by Pyno).
 - [ ] `npm run fetch-ffmpeg` run for this release; `resources/bin/LICENSE.txt` present.
 - [ ] `npm run dist` green.

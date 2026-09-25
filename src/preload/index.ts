@@ -29,6 +29,11 @@ const api: SquishApi = {
   revealInFolder: (p) => ipcRenderer.invoke('reveal', p),
   openPromo: () => ipcRenderer.invoke('open:promo'),
   openFfmpegSource: () => ipcRenderer.invoke('open:ffmpeg'),
+  update: {
+    status: () => ipcRenderer.invoke('update:status'),
+    onStatus: on('update:status'),
+    install: () => ipcRenderer.invoke('update:install')
+  },
   window: {
     minimize: () => ipcRenderer.send('win:minimize'),
     toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),

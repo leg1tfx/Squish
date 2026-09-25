@@ -5,6 +5,10 @@ export type PreviewResult = { ok: true; beforeUrl: string; afterUrl: string } | 
 export type EncodeOutcome =
   | { ok: true; result: EncodeResult }
   | { ok: false; kind: 'aborted' | 'disk' | 'ffmpeg' | 'size'; message: string; log: string }
+export type UpdateStatus =
+  | { state: 'none' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
 export interface SquishApi {
   version: string
   pathForFile(file: File): string
@@ -27,5 +31,10 @@ export interface SquishApi {
   revealInFolder(path: string): Promise<void>
   openPromo(): Promise<void>
   openFfmpegSource(): Promise<void>
+  update: {
+    status(): Promise<UpdateStatus>
+    onStatus(cb: (s: UpdateStatus) => void): () => void
+    install(): Promise<void>
+  }
   window: { minimize(): void; toggleMaximize(): void; close(): void }
 }

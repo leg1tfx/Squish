@@ -1,10 +1,12 @@
-import { app, BrowserWindow, net, protocol, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, net, protocol, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { ALLOWED_EXTERNAL } from '@shared/links'
 import { cleanupTemp, registerIpc } from './ipc'
 import { MEDIA_SCHEME, mediaFileFor } from './media'
 import { binPath } from './paths'
+import { startUpdater } from './updater'
 
 app.setName("Pyno's Squish")
 app.setAppUserModelId('com.pynos.squish')
@@ -44,6 +46,10 @@ app.whenReady().then(() => {
     return file ? net.fetch(pathToFileURL(file).toString()) : new Response('Not found', { status: 404 })
   })
   const ipc = registerIpc(env, () => win)
+  // Only installed builds update themselves; dev runs have no release feed.
+  const updater = app.isPackaged ? startUpdater(autoUpdater, (s) => win?.webContents.send('update:status', s)) : null
+  ipcMain.handle('update:status', () => updater?.status() ?? { state: 'none' })
+  ipcMain.handle('update:install', () => { updater?.install() })
   app.on('before-quit', (e) => {
     e.preventDefault()
     if (!quitting) {
