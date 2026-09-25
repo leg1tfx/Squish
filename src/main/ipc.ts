@@ -108,7 +108,8 @@ export function registerIpc(
     } finally {
       job = null
     }
-    void telemetry.track(encodeEvent({ outcome, info: current, settings, meta, encoders: await encodersP, lastFraction }))
+    const encoders = await encodersP
+    void telemetry.track(() => encodeEvent({ outcome, info: current, settings, meta, encoders, lastFraction }))
     return outcome
   }
 

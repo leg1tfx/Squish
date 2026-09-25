@@ -7,11 +7,17 @@ import { addPreset, cleanLabel, defaultStore, deletePreset, loadStore, renamePre
 const settings = { res: '1080', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null } as const
 
 describe('presetStore', () => {
-  it('returns defaults for a missing or corrupt file', async () => {
+  it('returns defaults for a missing file', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))
     expect(await loadStore(join(dir, 'nope.json'))).toEqual(defaultStore())
+  })
+  it('turns stats off for a corrupt or unknown-version file, since a stored opt-out may be lost', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))
+    const offSeen = { ...defaultStore(), telemetry: 'off', telemetryNoticeSeen: true }
     await writeFile(join(dir, 'bad.json'), '{not json')
-    expect(await loadStore(join(dir, 'bad.json'))).toEqual(defaultStore())
+    expect(await loadStore(join(dir, 'bad.json'))).toEqual(offSeen)
+    await writeFile(join(dir, 'v2.json'), JSON.stringify({ version: 2, userPresets: [] }))
+    expect(await loadStore(join(dir, 'v2.json'))).toEqual(offSeen)
   })
   it('round-trips through disk into a new folder', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))

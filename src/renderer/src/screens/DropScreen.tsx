@@ -41,7 +41,7 @@ export function DropScreen() {
   return (
     <div style={{ height: '100%', padding: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <motion.div
-        animate={shake} onDragOver={(e) => e.preventDefault()} onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDrop={onDrop}
+        layout animate={shake} onDragOver={(e) => e.preventDefault()} onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDrop={onDrop}
         onClick={() => void choose()} role="button" tabIndex={0} aria-label="Drop a video or choose a file"
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return

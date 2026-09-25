@@ -18,7 +18,7 @@ export function TelemetryNotice() {
   const [open, setOpen] = useState(false)
 
   return (
-    <motion.aside aria-label="Anonymous stats" layout
+    <motion.aside aria-label="Anonymous stats"
       initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1, transition: { ...bouncy, delay: 0.4 } }} exit={{ y: 16, opacity: 0, transition: smooth }}
       style={{ flexShrink: 0, borderRadius: 12, border: '1px solid var(--gold-line)', background: 'var(--surface)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

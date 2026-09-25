@@ -18,7 +18,7 @@ export interface TelemetryDeps {
 }
 export interface Telemetry {
   /** Never rejects. Callers should not await it: `void telemetry.track(e)`. */
-  track(event: TelemetryEvent): Promise<void>
+  track(event: TelemetryEvent | (() => TelemetryEvent)): Promise<void>
 }
 
 export const SDK_VERSION = 'pynos-squish-telemetry@1'
@@ -45,8 +45,10 @@ export function createTelemetry(deps: TelemetryDeps): Telemetry {
   let sessionId = newSessionId(now(), random())
   let lastAt = now()
 
-  async function send(event: TelemetryEvent): Promise<void> {
+  // A lazy event is built here, after the consent check and inside the catch, so building it can never throw at the caller.
+  async function send(lazy: TelemetryEvent | (() => TelemetryEvent)): Promise<void> {
     if (!url || !(await deps.isEnabled())) return
+    const event = typeof lazy === 'function' ? lazy() : lazy
     const t = now()
     if (t - lastAt > SESSION_IDLE_MS) sessionId = newSessionId(t, random())
     lastAt = t
@@ -64,5 +66,5 @@ export function createTelemetry(deps: TelemetryDeps): Telemetry {
     })
   }
 
-  return { track: (event) => send(event).catch(() => {}) }
+  return { track: (lazy) => send(lazy).catch(() => {}) }
 }

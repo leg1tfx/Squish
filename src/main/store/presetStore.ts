@@ -33,10 +33,21 @@ export function defaultStore(): StoreData {
   return { version: 1, userPresets: [], lastPresetId: DEFAULT_PRESET_ID, promoDismissed: false, telemetry: 'on', telemetryNoticeSeen: false }
 }
 
+/** A file that exists but can't be used may have held an opt-out, so stats stay off (the About switch can turn them back on). */
+function unusableStore(): StoreData {
+  return { ...defaultStore(), telemetry: 'off', telemetryNoticeSeen: true }
+}
+
 export async function loadStore(file: string): Promise<StoreData> {
+  let raw: string
   try {
-    const d = JSON.parse(await readFile(file, 'utf8')) as Partial<StoreData>
-    if (d.version !== 1 || !Array.isArray(d.userPresets)) return defaultStore()
+    raw = await readFile(file, 'utf8')
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === 'ENOENT' ? defaultStore() : unusableStore()
+  }
+  try {
+    const d = JSON.parse(raw) as Partial<StoreData>
+    if (d.version !== 1 || !Array.isArray(d.userPresets)) return unusableStore()
     return {
       version: 1,
       userPresets: d.userPresets
@@ -49,7 +60,7 @@ export async function loadStore(file: string): Promise<StoreData> {
       telemetryNoticeSeen: d.telemetryNoticeSeen === true
     }
   } catch {
-    return defaultStore()
+    return unusableStore()
   }
 }
 
