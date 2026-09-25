@@ -11,7 +11,12 @@ export function settingsFromPreset(p: Preset, encoder: EncoderChoice): Settings 
 
 export function doneSummary(info: VideoInfo, maxMB: number | null, bytes: number): string {
   const pct = Math.round((1 - bytes / info.sizeBytes) * 100)
-  const smaller = pct > 0 ? `${pct}% smaller than before.` : 'Slightly larger than the original. The source was already well compressed.'
+  const smaller =
+    bytes > info.sizeBytes
+      ? 'Slightly larger than the original. The source was already well compressed.'
+      : pct <= 0
+        ? 'About the same size as the original.'
+        : `${pct}% smaller than before.`
   if (maxMB === null) return smaller
   const spare = (maxMB * 1e6 - bytes) / 1e6
   return `Fits under ${maxMB} MB with ${spare.toFixed(1)} MB to spare. ${smaller}`

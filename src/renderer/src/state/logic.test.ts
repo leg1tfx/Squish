@@ -26,6 +26,14 @@ describe('logic', () => {
   it('does not claim smaller when the result grew', () => {
     expect(doneSummary(info, null, 1_400_000_000)).toBe('Slightly larger than the original. The source was already well compressed.')
   })
+  it('calls out equal size as about the same, not larger', () => {
+    expect(doneSummary(info, null, info.sizeBytes)).toBe('About the same size as the original.')
+    expect(doneSummary(info, 1400, info.sizeBytes)).toBe('Fits under 1400 MB with 60.0 MB to spare. About the same size as the original.')
+  })
+  it('calls out a negligible shrink as about the same, not smaller', () => {
+    const bytes = Math.round(info.sizeBytes * 0.998)
+    expect(doneSummary(info, null, bytes)).toBe('About the same size as the original.')
+  })
   it('suggests the next free preset name', () => {
     expect(nextPresetName(store)).toBe('My preset 2')
   })

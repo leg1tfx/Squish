@@ -35,4 +35,24 @@ describe('presetStore', () => {
     expect(cleanLabel('   ')).toBeNull()
     expect(cleanLabel('x'.repeat(50))).toHaveLength(40)
   })
+  it('drops invalid stored presets and forces builtIn false', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))
+    const file = join(dir, 'presets.json')
+    await writeFile(
+      file,
+      JSON.stringify({
+        version: 1,
+        lastPresetId: 'tiktok',
+        promoDismissed: false,
+        userPresets: [
+          { id: 'user-1', label: 'Valid', builtIn: true, settings },
+          { id: 'user-2', label: 'Empty settings', builtIn: false, settings: {} },
+          { id: 'user-3', label: 'Bad res', builtIn: false, settings: { ...settings, res: 123 } }
+        ]
+      }),
+      'utf8'
+    )
+    const loaded = await loadStore(file)
+    expect(loaded.userPresets).toEqual([{ id: 'user-1', label: 'Valid', builtIn: false, settings }])
+  })
 })

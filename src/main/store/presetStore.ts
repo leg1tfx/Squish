@@ -3,6 +3,32 @@ import { dirname } from 'node:path'
 import { DEFAULT_PRESET_ID } from '@shared/presets'
 import type { Preset, PresetSettings, StoreData } from '@shared/types'
 
+const RES_VALUES = new Set(['best', '1440', '1080', '720'])
+const FPS_VALUES = new Set(['best', '60', '30'])
+const AUDIO_VALUES = new Set(['best', 'high', 'standard'])
+const CODEC_VALUES = new Set(['h264', 'h265'])
+
+function isPositiveFiniteNumberOrNull(x: unknown): x is number | null {
+  return x === null || (typeof x === 'number' && Number.isFinite(x) && x > 0)
+}
+
+export function isPresetSettings(x: unknown): x is PresetSettings {
+  if (!x || typeof x !== 'object') return false
+  const s = x as Record<string, unknown>
+  return (
+    typeof s.res === 'string' &&
+    RES_VALUES.has(s.res) &&
+    typeof s.fps === 'string' &&
+    FPS_VALUES.has(s.fps) &&
+    typeof s.audio === 'string' &&
+    AUDIO_VALUES.has(s.audio) &&
+    typeof s.codec === 'string' &&
+    CODEC_VALUES.has(s.codec) &&
+    isPositiveFiniteNumberOrNull(s.maxMB) &&
+    isPositiveFiniteNumberOrNull(s.bitrateKbps)
+  )
+}
+
 export function defaultStore(): StoreData {
   return { version: 1, userPresets: [], lastPresetId: DEFAULT_PRESET_ID, promoDismissed: false }
 }
@@ -13,7 +39,9 @@ export async function loadStore(file: string): Promise<StoreData> {
     if (d.version !== 1 || !Array.isArray(d.userPresets)) return defaultStore()
     return {
       version: 1,
-      userPresets: d.userPresets.filter((p) => p && typeof p.id === 'string' && typeof p.label === 'string' && p.settings),
+      userPresets: d.userPresets
+        .filter((p) => p && typeof p.id === 'string' && typeof p.label === 'string' && isPresetSettings(p.settings))
+        .map((p) => ({ ...p, builtIn: false })),
       lastPresetId: typeof d.lastPresetId === 'string' ? d.lastPresetId : DEFAULT_PRESET_ID,
       promoDismissed: d.promoDismissed === true
     }
