@@ -55,13 +55,13 @@ export function EncodingScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span className="mono" style={{ fontSize: 14, color: 'var(--ink-2)', fontVariantNumeric: 'tabular-nums' }}>{fmtLeft(progress?.remainingSec ?? null)}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <button className="mono" style={{ fontSize: 13, color: 'var(--ink-3)' }} onClick={() => setShowLog((v) => !v)}>{showLog ? 'Hide log' : 'Show log'}</button>
+          <button className="mono" aria-expanded={showLog} aria-controls="encoding-log" style={{ fontSize: 13, color: 'var(--ink-3)' }} onClick={() => setShowLog((v) => !v)}>{showLog ? 'Hide log' : 'Show log'}</button>
           <motion.button {...pressProps} className="btn btn-ghost" style={{ height: 44 }} onClick={() => void cancelEncode()}>Cancel</motion.button>
         </div>
       </div>
       <AnimatePresence>
         {showLog && (
-          <motion.pre className="mono" initial={{ height: 0, opacity: 0 }} animate={{ height: 180, opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={smooth}
+          <motion.pre id="encoding-log" className="mono" initial={{ height: 0, opacity: 0 }} animate={{ height: 180, opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={smooth}
             style={{ margin: 0, overflow: 'auto', padding: 14, borderRadius: 8, background: 'var(--surface-sunken)', border: '1px solid var(--gold-line)', color: 'var(--circuit)', fontSize: 12, userSelect: 'text' }}>
             {log.join('\n')}
           </motion.pre>

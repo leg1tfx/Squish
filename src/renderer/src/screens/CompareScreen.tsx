@@ -1,4 +1,4 @@
-import { animate, motion, useMotionValue, useTransform } from 'motion/react'
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { formatBytes } from '@shared/format'
 import { Segmented } from '../components/Segmented'
@@ -8,6 +8,7 @@ import { useSquish } from '../state/store'
 
 export function CompareScreen() {
   const { preview, previewError, plan, info, settings, backToSettings, startEncode } = useSquish()
+  const reduced = useReducedMotion()
   const split = useMotionValue(50)
   const clip = useTransform(split, (v) => `inset(0 0 0 ${v}%)`)
   const left = useTransform(split, (v) => `${v}%`)
@@ -20,14 +21,14 @@ export function CompareScreen() {
   const touched = useRef(false)
 
   useEffect(() => {
-    if (!preview) return
+    if (!preview || reduced) return
     const t = setTimeout(async () => {
       if (touched.current) return
       await animate(split, 30, { duration: 0.42, ease: 'easeOut' })
       if (!touched.current) await animate(split, 50, smooth)
     }, 700)
     return () => clearTimeout(t)
-  }, [preview, split])
+  }, [preview, split, reduced])
 
   const setFromPointer = (clientX: number): void => {
     const r = frame.current!.getBoundingClientRect()

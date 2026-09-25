@@ -1,4 +1,4 @@
-import { animate, motion, useMotionValue, useTransform } from 'motion/react'
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useEffect } from 'react'
 import { bouncy, pressProps, smooth, snappy } from '../motion'
 import { doneSummary } from '../state/logic'
@@ -6,13 +6,15 @@ import { useSquish } from '../state/store'
 
 export function DoneScreen() {
   const { result, info, settings, data, reset, dismissPromo } = useSquish()
+  const reduced = useReducedMotion()
   const mb = useMotionValue(info ? info.sizeBytes / 1e6 : 0)
   const text = useTransform(mb, (v) => (v >= 1000 ? `${(v / 1000).toFixed(2)} GB` : `${v.toFixed(1)} MB`))
   useEffect(() => {
     if (!result) return
+    if (reduced) { mb.set(result.bytes / 1e6); return }
     const c = animate(mb, result.bytes / 1e6, { duration: 1.1, delay: 0.56, ease: [0.16, 1, 0.3, 1] })
     return () => c.stop()
-  }, [result, mb])
+  }, [result, mb, reduced])
   if (!result || !info) return <div />
 
   return (
