@@ -65,6 +65,10 @@ export interface StoreData {
   userPresets: Preset[]
   lastPresetId: string
   promoDismissed: boolean
+  /** Anonymous stats. Opt-out: 'on' unless the user turned it off. */
+  telemetry: 'on' | 'off'
+  /** True once the first-run stats notice was answered (or the About switch was used). */
+  telemetryNoticeSeen: boolean
 }
 
 export interface Plan {

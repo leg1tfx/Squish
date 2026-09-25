@@ -30,7 +30,7 @@ export function isPresetSettings(x: unknown): x is PresetSettings {
 }
 
 export function defaultStore(): StoreData {
-  return { version: 1, userPresets: [], lastPresetId: DEFAULT_PRESET_ID, promoDismissed: false }
+  return { version: 1, userPresets: [], lastPresetId: DEFAULT_PRESET_ID, promoDismissed: false, telemetry: 'on', telemetryNoticeSeen: false }
 }
 
 export async function loadStore(file: string): Promise<StoreData> {
@@ -43,7 +43,10 @@ export async function loadStore(file: string): Promise<StoreData> {
         .filter((p) => p && typeof p.id === 'string' && typeof p.label === 'string' && isPresetSettings(p.settings))
         .map((p) => ({ ...p, builtIn: false })),
       lastPresetId: typeof d.lastPresetId === 'string' ? d.lastPresetId : DEFAULT_PRESET_ID,
-      promoDismissed: d.promoDismissed === true
+      promoDismissed: d.promoDismissed === true,
+      // Missing field (file from 1.0.0) means the default 'on'. A present but unknown value means 'off': when unsure, don't send.
+      telemetry: d.telemetry === undefined || d.telemetry === 'on' ? 'on' : 'off',
+      telemetryNoticeSeen: d.telemetryNoticeSeen === true
     }
   } catch {
     return defaultStore()

@@ -25,6 +25,8 @@ export interface SquishApi {
     deletePreset(id: string): Promise<StoreData>
     setLastPreset(id: string): Promise<StoreData>
     dismissPromo(): Promise<StoreData>
+    setTelemetry(on: boolean): Promise<StoreData>
+    telemetryNoticeSeen(): Promise<StoreData>
   }
   revealInFolder(path: string): Promise<void>
   openPromo(): Promise<void>

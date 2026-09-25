@@ -24,7 +24,9 @@ const api: SquishApi = {
     renamePreset: (id, l) => ipcRenderer.invoke('store:rename', id, l),
     deletePreset: (id) => ipcRenderer.invoke('store:delete', id),
     setLastPreset: (id) => ipcRenderer.invoke('store:last', id),
-    dismissPromo: () => ipcRenderer.invoke('store:dismissPromo')
+    dismissPromo: () => ipcRenderer.invoke('store:dismissPromo'),
+    setTelemetry: (on) => ipcRenderer.invoke('store:setTelemetry', on),
+    telemetryNoticeSeen: () => ipcRenderer.invoke('store:telemetryNoticeSeen')
   },
   revealInFolder: (p) => ipcRenderer.invoke('reveal', p),
   openPromo: () => ipcRenderer.invoke('open:promo'),

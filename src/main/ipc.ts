@@ -109,6 +109,9 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
   ipcMain.handle('store:delete', async (_e, id: string) => setStore(deletePreset(await getStore(), id)))
   ipcMain.handle('store:last', async (_e, id: string) => setStore({ ...(await getStore()), lastPresetId: id }))
   ipcMain.handle('store:dismissPromo', async () => setStore({ ...(await getStore()), promoDismissed: true }))
+  ipcMain.handle('store:setTelemetry', async (_e, on: unknown) =>
+    setStore({ ...(await getStore()), telemetry: on === true ? 'on' : 'off', telemetryNoticeSeen: true }))
+  ipcMain.handle('store:telemetryNoticeSeen', async () => setStore({ ...(await getStore()), telemetryNoticeSeen: true }))
 
   ipcMain.handle('reveal', (_e, p: string) => { shell.showItemInFolder(p) })
   ipcMain.handle('open:promo', () => shell.openExternal(PROMO_URL))

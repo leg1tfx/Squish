@@ -55,4 +55,22 @@ describe('presetStore', () => {
     const loaded = await loadStore(file)
     expect(loaded.userPresets).toEqual([{ id: 'user-1', label: 'Valid', builtIn: false, settings }])
   })
+  it('defaults stats on with the notice unseen, also for files from 1.0.0', async () => {
+    expect(defaultStore()).toMatchObject({ telemetry: 'on', telemetryNoticeSeen: false })
+    const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))
+    const file = join(dir, 'presets.json')
+    await writeFile(file, JSON.stringify({ version: 1, userPresets: [], lastPresetId: 'reels', promoDismissed: true }), 'utf8')
+    expect(await loadStore(file)).toEqual({
+      version: 1, userPresets: [], lastPresetId: 'reels', promoDismissed: true, telemetry: 'on', telemetryNoticeSeen: false
+    })
+  })
+  it('keeps a stored opt-out and reads junk values as off / unseen', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))
+    const file = join(dir, 'presets.json')
+    const stored = { version: 1, userPresets: [], lastPresetId: 'tiktok', promoDismissed: false }
+    await writeFile(file, JSON.stringify({ ...stored, telemetry: 'off', telemetryNoticeSeen: true }), 'utf8')
+    expect(await loadStore(file)).toMatchObject({ telemetry: 'off', telemetryNoticeSeen: true })
+    await writeFile(file, JSON.stringify({ ...stored, telemetry: 'OFF', telemetryNoticeSeen: 'yes' }), 'utf8')
+    expect(await loadStore(file)).toMatchObject({ telemetry: 'off', telemetryNoticeSeen: false })
+  })
 })
