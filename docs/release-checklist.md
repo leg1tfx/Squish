@@ -1,6 +1,8 @@
 # Release checklist
 
 - [ ] `PROMO_URL` in `src/shared/links.ts` points to Pyno's Payhip store (confirmed by Pyno).
+- [ ] `APTABASE_APP_KEY` in `src/shared/links.ts` is the Pyno's Squish key. A packaged build shows up in the Aptabase dashboard under release data (not Debug).
+- [ ] The Payhip product page says the app sends anonymous usage and error stats, and that they can be turned off in About.
 - [ ] `npm run fetch-ffmpeg` run for this release; `resources/bin/LICENSE.txt` present.
 - [ ] `npm run dist` green.
 - [ ] Test PCs, each with: iPhone HDR clip, portrait phone clip, 120 fps clip, silent screen recording, 20-minute 4K file.
@@ -22,3 +24,6 @@
 - [ ] Keyboard: Tab and arrow keys in the settings segments. Shift+F10 on a user preset chip opens Rename/Delete, and the menu stays open.
 - [ ] Compare screen: drag the split with the mouse and with the arrow keys.
 - [ ] Visual pass over all 5 screens in light of the spec (springs feel lively, nothing janky).
+- [ ] Fresh install: the stats notice shows under the drop zone. "Got it" hides it for good (restart to check). "Turn off" hides it and the About switch shows off.
+- [ ] About switch toggles with mouse, Tab + Space, and a screen reader announces it as a switch.
+- [ ] Offline (network off or app blocked in the firewall): encode and quit work normally, with no delay.

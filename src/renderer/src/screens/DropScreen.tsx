@@ -1,5 +1,6 @@
-import { motion, useAnimationControls } from 'motion/react'
+import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { TelemetryNotice } from '../components/TelemetryNotice'
 import { bouncy, pressProps, snappy } from '../motion'
 import { useSquish } from '../state/store'
 
@@ -7,6 +8,7 @@ export function DropScreen() {
   const openFile = useSquish((s) => s.openFile)
   const error = useSquish((s) => s.dropError)
   const nonce = useSquish((s) => s.dropNonce)
+  const showNotice = useSquish((s) => s.data !== null && !s.data.telemetryNoticeSeen)
   const [over, setOver] = useState(false)
   const dragDepth = useRef(0)
   const shake = useAnimationControls()
@@ -37,7 +39,7 @@ export function DropScreen() {
   }
 
   return (
-    <div style={{ height: '100%', padding: 32, display: 'flex' }}>
+    <div style={{ height: '100%', padding: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <motion.div
         animate={shake} onDragOver={(e) => e.preventDefault()} onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDrop={onDrop}
         onClick={() => void choose()} role="button" tabIndex={0} aria-label="Drop a video or choose a file"
@@ -71,6 +73,7 @@ export function DropScreen() {
           onClick={(e) => { e.stopPropagation(); void choose() }}>Choose file</motion.button>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 'auto 0 0 0', height: 14, background: 'repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px 12px) 0 100% / 100% 6px repeat-x, repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 96px) 0 100% / 100% 12px repeat-x' }} />
       </motion.div>
+      <AnimatePresence>{showNotice && <TelemetryNotice />}</AnimatePresence>
     </div>
   )
 }

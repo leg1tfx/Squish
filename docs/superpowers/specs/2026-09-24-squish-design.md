@@ -20,8 +20,9 @@ Pyno's Squish ist eine Windows-Desktop-App, die Videos für Social Media komprim
 | Plattform | Nur Windows 10/11 (x64) |
 | UI-Sprache | Englisch, keine Übersetzungs-Infrastruktur |
 | Dateien | Eine Datei nach der anderen |
-| Netzwerk | Keins. Einzige Ausnahme: Der Pyno's-Link öffnet den Standardbrowser |
-| Konto, Lizenz, Telemetrie | Keine |
+| Netzwerk | Der Pyno's-Link öffnet den Standardbrowser. Anonyme Statistiken an Aptabase (EU), siehe [Telemetrie-Spec](2026-09-25-telemetry-design.md) |
+| Konto, Lizenz | Keine |
+| Telemetrie | Anonym, Opt-out, siehe [Telemetrie-Spec](2026-09-25-telemetry-design.md) |
 | Ausgabe | MP4, Video H.264 oder H.265 (Tag `hvc1`), Audio AAC, `+faststart` |
 | Speicherort | Neben dem Original als `<name>_squish.mp4`. Existiert die Datei, dann `<name>_squish (2).mp4` usw. Es wird nie überschrieben |
 

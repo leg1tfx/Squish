@@ -1,7 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { smooth } from '../motion'
+import { bouncy, smooth } from '../motion'
+import { useSquish } from '../state/store'
 
 export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const data = useSquish((s) => s.data)
+  const setTelemetry = useSquish((s) => s.setTelemetry)
+  const statsOn = data?.telemetry !== 'off'
   return (
     <AnimatePresence>
       {open && (
@@ -15,6 +19,13 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             <p style={{ margin: 0, fontSize: 14, lineHeight: '22px', color: 'var(--ink-2)' }}>
               Squish uses FFmpeg, licensed under the GNU GPL v3. FFmpeg runs as a separate program bundled with this app. Its source code is available from the link below.
             </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, borderTop: '1px solid var(--hairline)' }}>
+              <span id="stats-label" style={{ fontSize: 14, lineHeight: '22px', color: 'var(--ink-2)' }}>Share anonymous stats</span>
+              <button role="switch" aria-checked={statsOn} aria-labelledby="stats-label" disabled={!data} onClick={() => void setTelemetry(!statsOn)}
+                style={{ width: 44, height: 24, flexShrink: 0, borderRadius: 12, padding: 2, display: 'flex', justifyContent: statsOn ? 'flex-end' : 'flex-start', background: statsOn ? 'var(--gold)' : 'var(--rule)', transition: 'background-color 150ms' }}>
+                <motion.span layout transition={bouncy} style={{ width: 20, height: 20, borderRadius: 10, background: statsOn ? 'var(--on-gold)' : 'var(--ink-2)' }} />
+              </button>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
               <button className="link-btn" onClick={() => window.squish.openFfmpegSource()}>FFmpeg source →</button>
               <button className="btn btn-ghost" style={{ height: 40 }} onClick={onClose}>Close</button>

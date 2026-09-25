@@ -37,6 +37,8 @@ interface State {
   backToSettings(): void
   reset(): void
   dismissPromo(): Promise<void>
+  setTelemetry(on: boolean): Promise<void>
+  acknowledgeTelemetryNotice(): Promise<void>
 }
 
 const api = (): Window['squish'] => window.squish
@@ -117,6 +119,8 @@ export const useSquish = create<State>((set, get) => {
     async cancelEncode() { await api().cancel() },
     backToSettings() { set({ screen: 'settings', encodeError: null }) },
     reset() { set({ screen: 'drop', info: null, thumbUrl: null, result: null, preview: null, progress: null }) },
-    async dismissPromo() { set({ data: await api().store.dismissPromo() }) }
+    async dismissPromo() { set({ data: await api().store.dismissPromo() }) },
+    async setTelemetry(on) { set({ data: await api().store.setTelemetry(on) }) },
+    async acknowledgeTelemetryNotice() { set({ data: await api().store.telemetryNoticeSeen() }) }
   }
 })

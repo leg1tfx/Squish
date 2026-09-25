@@ -15,6 +15,9 @@ export function DoneScreen() {
     const c = animate(mb, result.bytes / 1e6, { duration: 1.1, delay: 0.56, ease: [0.16, 1, 0.3, 1] })
     return () => c.stop()
   }, [result, mb, reduced])
+  const showPromo = data !== null && !data.promoDismissed
+  // Once per finished encode; not again when the promo is dismissed.
+  useEffect(() => { if (result && showPromo) window.squish.track('promo_shown') }, [result])
   if (!result || !info) return <div />
 
   return (
@@ -45,15 +48,15 @@ export function DoneScreen() {
           <motion.button {...pressProps} className="btn btn-ghost" onClick={reset}>Squish another</motion.button>
         </motion.div>
       </div>
-      {data && !data.promoDismissed && (
+      {showPromo && (
         <div style={{ flexShrink: 0, margin: '0 32px', height: 56, overflow: 'hidden', borderTop: '1px solid var(--hairline)' }}>
           <motion.div initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...smooth, delay: 1.5 }}
             style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 14, color: 'var(--ink-3)' }}>
               Squish is free. Pyno's makes more tools for editors.{' '}
-              <button className="link-btn" onClick={() => void window.squish.openPromo()}>See them →</button>
+              <button className="link-btn" onClick={() => { window.squish.track('promo_clicked'); void window.squish.openPromo() }}>See them →</button>
             </span>
-            <button aria-label="Hide this" className="mono" style={{ width: 32, height: 32, color: 'var(--ink-3)', fontSize: 16 }} onClick={() => void dismissPromo()}>×</button>
+            <button aria-label="Hide this" className="mono" style={{ width: 32, height: 32, color: 'var(--ink-3)', fontSize: 16 }} onClick={() => { window.squish.track('promo_dismissed'); void dismissPromo() }}>×</button>
           </motion.div>
         </div>
       )}
