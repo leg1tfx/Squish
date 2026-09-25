@@ -112,11 +112,7 @@
   <section class="card">
     <details id="settings">
       <summary>Einstellungen: Cloudflare R2</summary>
-      <ol class="help" style="margin-top:12px">
-        <li>Cloudflare-Dashboard → <b>R2 Object Storage</b> → <b>Manage API tokens</b> → <b>Create API token</b>.</li>
-        <li>Rechte: <b>Object Read &amp; Write</b>, nur für deinen Bucket.</li>
-        <li>Die angezeigten Werte hier eintragen. Die Account-ID steht in der Endpoint-Adresse vor <code>.r2.cloudflarestorage.com</code>.</li>
-      </ol>
+      <p class="hint" style="margin-top:12px">Schritt-für-Schritt-Anleitung: <code>docs/Cloudflare-R2-Anleitung.md</code> im Squish-Ordner. Kurz: R2 → <b>API Tokens: Manage</b> → <b>Create API token</b> mit <b>Object Read &amp; Write</b> für deinen Bucket, dann die Werte hier eintragen.</p>
       <form id="settingsForm">
         <div class="grid">
           <label>Account-ID<input name="accountId" autocomplete="off"></label>

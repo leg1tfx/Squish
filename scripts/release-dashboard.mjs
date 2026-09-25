@@ -70,10 +70,10 @@ function startJob(name, fn) {
   fn(log).then(() => { j.ok = true }, (e) => { log(`✗ ${e.message}`); j.ok = false }).finally(() => { j.running = false })
 }
 
-function runBuild(log) {
+function runNpm(script, log) {
   return new Promise((resolve, reject) => {
-    log('> npm run dist')
-    const p = spawn('npm', ['run', 'dist'], { cwd: root, shell: true, env: { ...process.env, FORCE_COLOR: '0' } })
+    log(`> npm run ${script}`)
+    const p = spawn('npm', ['run', script], { cwd: root, shell: true, env: { ...process.env, FORCE_COLOR: '0' } })
     let rest = ''
     const onData = (d) => {
       const lines = (rest + d.toString()).split(/\r?\n/)
@@ -85,9 +85,19 @@ function runBuild(log) {
     p.on('error', reject)
     p.on('close', (code) => {
       if (rest.trim()) log(rest)
-      code === 0 ? (log('✓ Installer gebaut.'), resolve()) : reject(new Error(`Build abgebrochen (Code ${code}).`))
+      code === 0 ? resolve() : reject(new Error(`„npm run ${script}“ abgebrochen (Code ${code}).`))
     })
   })
+}
+
+async function runBuild(log) {
+  // Without these the installer would ship without FFmpeg and the app could not encode.
+  if (!['ffmpeg.exe', 'ffprobe.exe'].every((f) => existsSync(join(root, 'resources', 'bin', f)))) {
+    log('FFmpeg fehlt noch, wird zuerst geladen …')
+    await runNpm('fetch-ffmpeg', log)
+  }
+  await runNpm('dist', log)
+  log('✓ Installer gebaut.')
 }
 
 async function runUpload(log) {
@@ -164,10 +174,19 @@ const server = createServer(async (req, res) => {
   }
 })
 
-server.listen(PORT, '127.0.0.1', () => {
-  const url = `http://127.0.0.1:${PORT}/`
-  console.log(`Release-Dashboard läuft: ${url}  (Beenden mit Strg+C)`)
+function openBrowser(url) {
   if (process.argv.includes('--no-open')) return
   const [cmd, args] = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : [process.platform === 'darwin' ? 'open' : 'xdg-open', [url]]
   spawn(cmd, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref()
+}
+
+const URL_ = `http://127.0.0.1:${PORT}/`
+server.on('error', (e) => {
+  if (e.code !== 'EADDRINUSE') throw e
+  console.log(`Das Dashboard läuft schon: ${URL_}`)
+  openBrowser(URL_)
+})
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`Release-Dashboard läuft: ${URL_}  (Beenden: Fenster schließen oder Strg+C)`)
+  openBrowser(URL_)
 })

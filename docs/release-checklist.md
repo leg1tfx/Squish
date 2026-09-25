@@ -5,14 +5,10 @@
 Installed copies check for updates at start and every 6 hours, download in the background,
 and install on the next quit (or right away via "Update ready · Restart" in the title bar).
 
-Use the release dashboard: `npm run dashboard` opens it in the browser. It shows the version customers have,
-and walks through three buttons: new version number → build installer → publish.
+Use the release dashboard: double-click `Update-Dashboard.bat` (or `npm run dashboard`). It shows the version customers have,
+and walks through three buttons: new version number → build installer → publish. It fetches FFmpeg first if `resources/bin` is empty.
 
-One-time setup (Cloudflare dashboard, no server needed):
-1. R2 Object Storage → Create bucket, name it `pynos-updates`. R2 asks for a payment method once; the free tier (10 GB, no download fees) covers this easily.
-2. Open the bucket → Settings → Custom Domains → Connect Domain → `updates.pynos-ae-suite.de`.
-3. R2 Object Storage → Manage API tokens → Create API token with **Object Read & Write** for that bucket.
-4. `npm run dashboard` → "Einstellungen: Cloudflare R2" → enter Account ID, bucket name, Access Key ID and Secret. They are saved only in `.release-secrets.json` (git-ignored).
+One-time Cloudflare R2 setup: see [Cloudflare-R2-Anleitung.md](Cloudflare-R2-Anleitung.md) (German, step by step).
 
 After publishing, test once: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
 
