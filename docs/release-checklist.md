@@ -5,17 +5,17 @@
 Installed copies check for updates at start and every 6 hours, download in the background,
 and install on the next quit (or right away via "Update ready · Restart" in the title bar).
 
-One-time setup:
-- Create the **public** repo `leg1tfx/squish-releases` on GitHub (empty; it only holds releases).
-- Create a GitHub token with write access to that repo (fine-grained: Contents read/write).
+One-time setup (Cloudflare dashboard, no server needed):
+1. R2 Object Storage → Create bucket, name it `pynos-updates`. R2 asks for a payment method once; the free tier (10 GB, no download fees) covers this easily.
+2. Open the bucket → Settings → Custom Domains → Connect Domain → `updates.pynos-ae-suite.de`.
+3. In the bucket, create a folder `squish`.
 
 Each update:
 1. Raise `version` in `package.json` (e.g. `1.0.0` → `1.0.1`). Customers only get versions higher than theirs.
-2. `set GH_TOKEN=<token>` (PowerShell: `$env:GH_TOKEN="<token>"`), then `npm run release`.
-3. This uploads `Pynos-Squish-Setup-<version>.exe`, its `.blockmap` and `latest.yml` to a release on `squish-releases`. Do not delete or rename `latest.yml`; the apps read it.
-4. Test: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
-
-`npm run dist` still builds locally without publishing.
+2. `npm run dist`.
+3. In the bucket's `squish` folder, upload these three files from `release/`: `Pynos-Squish-Setup-<version>.exe`, `Pynos-Squish-Setup-<version>.exe.blockmap` and `latest.yml`. Upload `latest.yml` **last**, and replace the old one. You can delete the previous .exe and .blockmap afterwards.
+4. Check `https://updates.pynos-ae-suite.de/squish/latest.yml` in the browser shows the new version.
+5. Test: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
 
 ## Every release
 

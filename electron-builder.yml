@@ -22,11 +22,9 @@ nsis:
   allowToChangeInstallationDirectory: true
   shortcutName: "Pyno's Squish"
   uninstallDisplayName: "Pyno's Squish"
-# Auto-update feed. The source repo is private, so installers are published to a
-# separate public repo that holds only releases (no code). Customers' apps read
-# latest.yml from its newest release.
+# Auto-update feed: a Cloudflare R2 bucket served at updates.pynos-ae-suite.de.
+# Upload the .exe, .blockmap and latest.yml from release/ into its squish/ folder.
+# Customers' apps read latest.yml from there.
 publish:
-  provider: github
-  owner: leg1tfx
-  repo: squish-releases
-  releaseType: release
+  provider: generic
+  url: https://updates.pynos-ae-suite.de/squish
