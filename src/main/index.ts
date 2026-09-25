@@ -1,10 +1,12 @@
 import { app, BrowserWindow, net, protocol, shell } from 'electron'
+import { release } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { ALLOWED_EXTERNAL } from '@shared/links'
+import { ALLOWED_EXTERNAL, APTABASE_APP_KEY } from '@shared/links'
 import { cleanupTemp, registerIpc } from './ipc'
 import { MEDIA_SCHEME, mediaFileFor } from './media'
 import { binPath } from './paths'
+import { createTelemetry } from './telemetry'
 
 app.setName("Pyno's Squish")
 app.setAppUserModelId('com.pynos.squish')
@@ -43,7 +45,20 @@ app.whenReady().then(() => {
     const file = mediaFileFor(req.url, env.mediaDir)
     return file ? net.fetch(pathToFileURL(file).toString()) : new Response('Not found', { status: 404 })
   })
-  const ipc = registerIpc(env, () => win)
+  const ipc = registerIpc(env, () => win, (isEnabled) => createTelemetry({
+    appKey: APTABASE_APP_KEY,
+    system: {
+      isDebug: !app.isPackaged,
+      locale: app.getLocale().slice(0, 10),
+      osName: 'Windows',
+      osVersion: release(),
+      engineName: 'Chromium',
+      engineVersion: process.versions.chrome,
+      appVersion: app.getVersion()
+    },
+    isEnabled,
+    fetch: (url, init) => net.fetch(url, init)
+  }))
   app.on('before-quit', (e) => {
     e.preventDefault()
     if (!quitting) {

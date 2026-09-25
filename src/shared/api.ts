@@ -1,4 +1,5 @@
 import type { EncodeProgress, EncodeResult, EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from './types'
+import type { RendererEventName } from './telemetry'
 
 export type ProbeResult = { ok: true; info: VideoInfo; thumbUrl: string | null } | { ok: false; message: string }
 export type PreviewResult = { ok: true; beforeUrl: string; afterUrl: string } | { ok: false; message: string }
@@ -14,7 +15,7 @@ export interface SquishApi {
   probe(path: string): Promise<ProbeResult>
   encoders(): Promise<EncoderId[]>
   preview(settings: Settings): Promise<PreviewResult>
-  encode(settings: Settings): Promise<EncodeOutcome>
+  encode(settings: Settings, meta: EncodeMeta): Promise<EncodeOutcome>
   cancel(): Promise<void>
   onProgress(cb: (p: EncodeProgress) => void): () => void
   onLog(cb: (line: string) => void): () => void
@@ -31,5 +32,7 @@ export interface SquishApi {
   revealInFolder(path: string): Promise<void>
   openPromo(): Promise<void>
   openFfmpegSource(): Promise<void>
+  /** Anonymous stats for the promo card. Main ignores any other name and checks consent. */
+  track(name: RendererEventName): void
   window: { minimize(): void; toggleMaximize(): void; close(): void }
 }

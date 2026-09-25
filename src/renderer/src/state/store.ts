@@ -108,7 +108,8 @@ export const useSquish = create<State>((set, get) => {
 
     async startEncode() {
       set({ screen: 'encoding', progress: null, log: [], encodeError: null, result: null })
-      const r = await api().encode(get().settings)
+      const { settings, presetId, edited } = get()
+      const r = await api().encode(settings, { presetId, edited })
       if (r.ok) set({ result: r.result, screen: 'done' })
       else if (r.kind === 'aborted') set({ screen: 'settings' })
       else set({ encodeError: { kind: r.kind, message: r.message, log: r.log } })

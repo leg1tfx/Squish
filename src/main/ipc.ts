@@ -3,9 +3,9 @@ import { existsSync } from 'node:fs'
 import { mkdir, rm, stat, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { FFMPEG_SOURCE_URL, PROMO_URL } from '@shared/links'
-import type { EncodeOutcome, PreviewResult, ProbeResult } from '@shared/api'
+import type { EncodeMeta, EncodeOutcome, PreviewResult, ProbeResult } from '@shared/api'
 import type { EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from '@shared/types'
-import { VIDEO_EXTENSIONS } from '@shared/telemetry'
+import { encodeEvent, encodersProp, extProp, isRendererEvent, VIDEO_EXTENSIONS } from '@shared/telemetry'
 import { detectEncoders } from './ffmpeg/encoders'
 import { probeFile } from './ffmpeg/probe'
 import { createRunner } from './ffmpeg/runner'
@@ -14,13 +14,18 @@ import { makePreview, makeThumbnail } from './encode/preview'
 import { EncodeError, runEncode } from './encode/runEncode'
 import { mediaUrl } from './media'
 import { addPreset, deletePreset, loadStore, renamePreset, saveStore } from './store/presetStore'
+import type { Telemetry } from './telemetry'
 
 export interface IpcEnv { ffmpeg: string; ffprobe: string; tmpDir: string; mediaDir: string; storeFile: string }
 export interface IpcHandle { shutdown(): Promise<void> }
 
 const SHUTDOWN_TIMEOUT_MS = 5000
 
-export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null): IpcHandle {
+export function registerIpc(
+  env: IpcEnv,
+  getWindow: () => BrowserWindow | null,
+  makeTelemetry: (isEnabled: () => Promise<boolean>) => Telemetry
+): IpcHandle {
   const run = createRunner(env.ffmpeg)
   const encodersP: Promise<EncoderId[]> = detectEncoders(run).catch(() => ['cpu'])
   let info: VideoInfo | null = null
@@ -31,6 +36,8 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
   const getStore = async (): Promise<StoreData> => (store ??= await loadStore(env.storeFile))
   const setStore = async (d: StoreData): Promise<StoreData> => { store = d; await saveStore(env.storeFile, d); return d }
   const send = (ch: string, payload: unknown): void => getWindow()?.webContents.send(ch, payload)
+  const telemetry = makeTelemetry(async () => (await getStore()).telemetry === 'on')
+  void encodersP.then((list) => telemetry.track({ name: 'app_started', props: { encoders: encodersProp(list) } }))
 
   ipcMain.handle('file:open', async () => {
     const w = getWindow()
@@ -47,6 +54,7 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
       return { ok: true, info, thumbUrl: ok ? mediaUrl(thumb) : null }
     } catch {
       info = null
+      void telemetry.track({ name: 'probe_failed', props: { ext: extProp(path) } })
       return { ok: false, message: "Can't read this file." }
     }
   })
@@ -71,31 +79,42 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
     return p
   })
 
-  async function doEncode(settings: Settings): Promise<EncodeOutcome> {
+  async function doEncode(settings: Settings, meta: EncodeMeta): Promise<EncodeOutcome> {
     if (job) return { ok: false, kind: 'ffmpeg', message: 'An encode is already running.', log: '' }
     if (!info) return { ok: false, kind: 'ffmpeg', message: 'No video loaded.', log: '' }
+    const current = info
     job = new AbortController()
+    let lastFraction: number | null = null
+    let outcome: EncodeOutcome
     try {
       await mkdir(env.tmpDir, { recursive: true })
-      const output = uniqueOutputPath(info.path, existsSync)
+      const output = uniqueOutputPath(current.path, existsSync)
       const result = await runEncode(
-        { info, settings, available: await encodersP, output },
+        { info: current, settings, available: await encodersP, output },
         { run, tmpDir: env.tmpDir, fileSize: async (p) => (await stat(p)).size, remove: (p) => unlink(p).catch(() => {}) },
-        { progress: (p) => send('encode:progress', p), log: (l) => send('encode:log', l) },
+        {
+          progress: (p) => { lastFraction = p.fraction; send('encode:progress', p) },
+          log: (l) => send('encode:log', l)
+        },
         job.signal
       )
-      return { ok: true, result }
+      outcome = { ok: true, result }
     } catch (e) {
-      if (e instanceof EncodeError) return { ok: false, kind: e.kind, message: e.message, log: e.log }
-      const err = e as NodeJS.ErrnoException
-      return { ok: false, kind: err?.code === 'ENOSPC' ? 'disk' : 'ffmpeg', message: err.message, log: '' }
+      if (e instanceof EncodeError) outcome = { ok: false, kind: e.kind, message: e.message, log: e.log }
+      else {
+        const err = e as NodeJS.ErrnoException
+        outcome = { ok: false, kind: err?.code === 'ENOSPC' ? 'disk' : 'ffmpeg', message: err.message, log: '' }
+      }
     } finally {
       job = null
     }
+    void telemetry.track(encodeEvent({ outcome, info: current, settings, meta, encoders: await encodersP, lastFraction }))
+    return outcome
   }
 
-  ipcMain.handle('encode', (_e, settings: Settings) => {
-    const p = doEncode(settings)
+  ipcMain.handle('encode', (_e, settings: Settings, meta: Partial<EncodeMeta> | undefined) => {
+    // Normalized so a malformed meta can never make telemetry throw inside an encode.
+    const p = doEncode(settings, { presetId: typeof meta?.presetId === 'string' ? meta.presetId : '', edited: meta?.edited === true })
     encodeInFlight = p
     void p.finally(() => { if (encodeInFlight === p) encodeInFlight = null })
     return p
@@ -112,6 +131,9 @@ export function registerIpc(env: IpcEnv, getWindow: () => BrowserWindow | null):
   ipcMain.handle('store:setTelemetry', async (_e, on: unknown) =>
     setStore({ ...(await getStore()), telemetry: on === true ? 'on' : 'off', telemetryNoticeSeen: true }))
   ipcMain.handle('store:telemetryNoticeSeen', async () => setStore({ ...(await getStore()), telemetryNoticeSeen: true }))
+  ipcMain.on('telemetry:track', (_e, name: unknown) => {
+    if (isRendererEvent(name)) void telemetry.track({ name })
+  })
 
   ipcMain.handle('reveal', (_e, p: string) => { shell.showItemInFolder(p) })
   ipcMain.handle('open:promo', () => shell.openExternal(PROMO_URL))

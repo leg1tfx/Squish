@@ -14,7 +14,7 @@ const api: SquishApi = {
   probe: (p) => ipcRenderer.invoke('probe', p),
   encoders: () => ipcRenderer.invoke('encoders'),
   preview: (s) => ipcRenderer.invoke('preview', s),
-  encode: (s) => ipcRenderer.invoke('encode', s),
+  encode: (s, meta) => ipcRenderer.invoke('encode', s, meta),
   cancel: () => ipcRenderer.invoke('cancel'),
   onProgress: on('encode:progress'),
   onLog: on('encode:log'),
@@ -31,6 +31,7 @@ const api: SquishApi = {
   revealInFolder: (p) => ipcRenderer.invoke('reveal', p),
   openPromo: () => ipcRenderer.invoke('open:promo'),
   openFfmpegSource: () => ipcRenderer.invoke('open:ffmpeg'),
+  track: (name) => ipcRenderer.send('telemetry:track', name),
   window: {
     minimize: () => ipcRenderer.send('win:minimize'),
     toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),
