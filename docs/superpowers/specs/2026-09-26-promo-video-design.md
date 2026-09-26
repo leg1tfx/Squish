@@ -37,7 +37,7 @@ Das Voiceover ist ruhig, tief und selbstbewusst (Keynote-Sprecher). Die Zeiten s
 | **Hero** | 5–9.5 | Das App-Fenster schwebt leicht gekippt herein (CSS-3D-Perspektive, weicher Glanz, Schatten). Eine Datei-Karte gleitet in die Drop-Zone, der Chip `Discord · 10 MB` wird gold | “Drop in your video. Choose where it's going.” |
 | **Countdown** | 9.5–13.5 | Das Fenster fährt weg. Zentral zählt `48 MB` ruhig auf **`9.7 MB`** runter. Die Zahl zieht sich dabei leicht zusammen (subtiles Squash, kein Cartoon) | “Squish makes it fit. Every time.” |
 | **Triplet** | 13.5–17 | `Big video.` · `Small file.` · `Same resolution.` Jede Zeile einzeln zentriert, dann weg | “Big video. Small file. Same resolution.” |
-| **Endcard** | 17–20 | Wappen, **Pyno's Squish**, darunter `Free on Payhip.` in JetBrains Mono. Danach etwa 2 s nur Musik-Ausklang | “Free. Link in bio.” |
+| **Endcard** | 17–20 | Das Squish-Icon baut sich auf: Die zwei Chevrons drücken per Spring von außen gegen den goldenen Rahmen, der kurz nachgibt. Daneben **Pyno's Squish**, darunter `Free on Payhip.` in JetBrains Mono. Danach etwa 2 s nur Musik-Ausklang | “Free. Link in bio.” |
 
 **Wording:**
 
@@ -93,7 +93,7 @@ promo/
 └─ src/
    ├─ theme.ts           Farben, Fonts, Spring-Configs
    ├─ timing.ts          words.json → Szenen-Start/Dauer, Wort-Frames
-   ├─ components/        RevealWord, AppWindow, Crest, Counter
+   ├─ components/        RevealWord, AppWindow, SquishIcon, Counter
    ├─ scenes/            Hook, Title, Hero, Countdown, Triplet, Endcard
    └─ Promo.tsx          Komposition 1440×1080 @ 30 fps
 ```
@@ -102,7 +102,7 @@ promo/
 
 - `promo/` ist ein eigenständiges Projekt. App-Build, Tests und `electron-builder` bleiben unberührt.
 - Die Farbwerte stehen als Kopie in `theme.ts`, mit einem Kommentar zur Quelle. Es gibt keinen Import quer über die Projektgrenze.
-- Das Wappen wird aus dem vorhandenen Icon-Material in `build/` bzw. `resources/` übernommen.
+- `SquishIcon` baut das App-Icon als Inline-SVG nach, mit Pfaden und Farben aus `scripts/make-icon.mjs`. Chevrons und Rahmen sind einzeln animierbar.
 
 **Python:**
 
