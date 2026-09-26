@@ -16,14 +16,14 @@ Ein etwa 20 Sekunden langes Werbevideo für TikTok, das Pyno's Squish im Apple-S
 
 | Punkt | Entscheidung |
 |---|---|
-| Format | 4:3 quer, 1440×1080, 30 fps. Bewusste Wahl, TikTok zeigt es mit Balken |
+| Format | 4:3 quer, 1440×1080, 60 fps. Bewusste Wahl, TikTok zeigt es mit Balken |
 | Länge | ca. 20 s, ergibt sich aus der Voiceover-Länge (siehe 5.3) |
 | Stil | Apple-Style: viel Leere, eine Aussage pro Frame, Blur-to-sharp-Reveals, Springs mit wenig Bounce, ein Produkt-Hero-Shot |
 | Sprache | Englisch (Voiceover und Typo) |
 | Stimme | AI-Voiceover, lokal erzeugt (Kokoro) oder als beliebige eigene MP3 |
 | Werkzeug | Remotion (React), eigenes Projekt unter `promo/` |
 | Musik | „24K Magic“ ab ca. 0:23, nur als lokale Guide-Spur. Der Song wird beim Posten in TikTok hinzugefügt (siehe 5.2) |
-| Ausgabe | MP4, H.264, ca. 12 Mbit/s, AAC 192k, nur Stimme und SFX, Lautheit −14 LUFS |
+| Ausgabe | MP4, H.264, ca. 16 Mbit/s, AAC 192k, nur Stimme und SFX, Lautheit −14 LUFS |
 
 **Nicht im Umfang:** 9:16- oder andere Varianten, weitere Sprachen, separate Untertitel-Dateien, Posting und Veröffentlichung.
 
@@ -102,7 +102,7 @@ promo/
    ├─ timing.ts          words.json + Beat-Raster → Szenen-Start/Dauer, Wort-Frames
    ├─ components/        RevealWord, AppWindow, SquishIcon, Counter
    ├─ scenes/            Hook, Title, Hero, Countdown, Triplet, Endcard
-   └─ Promo.tsx          Komposition 1440×1080 @ 30 fps
+   └─ Promo.tsx          Komposition 1440×1080 @ 60 fps
 ```
 
 **Grenzen:**
