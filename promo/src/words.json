@@ -1,194 +1,194 @@
 [
   {
     "word": "48 MB.",
-    "start": 0.2,
-    "end": 1.3,
+    "start": 0.0,
+    "end": 1.56,
     "scene": "hook"
   },
   {
     "word": "Too",
-    "start": 1.45,
-    "end": 1.62,
+    "start": 1.9,
+    "end": 2.0,
     "scene": "hook"
   },
   {
     "word": "big",
-    "start": 1.62,
-    "end": 1.8,
+    "start": 2.0,
+    "end": 2.16,
     "scene": "hook"
   },
   {
     "word": "to",
-    "start": 1.8,
-    "end": 1.9,
+    "start": 2.16,
+    "end": 2.38,
     "scene": "hook"
   },
   {
     "word": "send.",
-    "start": 1.9,
-    "end": 2.2,
+    "start": 2.38,
+    "end": 2.66,
     "scene": "hook"
   },
   {
     "word": "Meet",
-    "start": 2.8,
-    "end": 3.05,
+    "start": 4.02,
+    "end": 4.32,
     "scene": "title"
   },
   {
     "word": "Pyno's",
-    "start": 3.1,
-    "end": 3.5,
+    "start": 4.32,
+    "end": 4.78,
     "scene": "title"
   },
   {
     "word": "Squish.",
-    "start": 3.5,
-    "end": 4.1,
+    "start": 4.78,
+    "end": 5.1,
     "scene": "title"
   },
   {
     "word": "Drop",
-    "start": 5.0,
-    "end": 5.2,
+    "start": 6.24,
+    "end": 6.64,
     "scene": "hero"
   },
   {
     "word": "in",
-    "start": 5.2,
-    "end": 5.3,
+    "start": 6.64,
+    "end": 6.78,
     "scene": "hero"
   },
   {
     "word": "your",
-    "start": 5.3,
-    "end": 5.45,
+    "start": 6.78,
+    "end": 6.88,
     "scene": "hero"
   },
   {
     "word": "video.",
-    "start": 5.45,
-    "end": 5.95,
+    "start": 6.88,
+    "end": 7.2,
     "scene": "hero"
   },
   {
     "word": "Choose",
-    "start": 6.4,
-    "end": 6.7,
+    "start": 7.68,
+    "end": 7.78,
     "scene": "hero"
   },
   {
     "word": "where",
-    "start": 6.7,
-    "end": 6.9,
+    "start": 7.78,
+    "end": 8.0,
     "scene": "hero"
   },
   {
     "word": "it's",
-    "start": 6.9,
-    "end": 7.05,
+    "start": 8.0,
+    "end": 8.2,
     "scene": "hero"
   },
   {
     "word": "going.",
-    "start": 7.05,
-    "end": 7.6,
+    "start": 8.2,
+    "end": 8.46,
     "scene": "hero"
   },
   {
     "word": "Squish",
-    "start": 9.6,
-    "end": 9.95,
+    "start": 9.82,
+    "end": 10.18,
     "scene": "countdown"
   },
   {
     "word": "makes",
-    "start": 9.95,
-    "end": 10.2,
+    "start": 10.18,
+    "end": 10.36,
     "scene": "countdown"
   },
   {
     "word": "it",
-    "start": 10.2,
-    "end": 10.3,
+    "start": 10.36,
+    "end": 10.58,
     "scene": "countdown"
   },
   {
     "word": "fit.",
-    "start": 10.3,
-    "end": 10.8,
+    "start": 10.58,
+    "end": 10.82,
     "scene": "countdown"
   },
   {
     "word": "Every",
-    "start": 11.3,
-    "end": 11.6,
+    "start": 11.22,
+    "end": 11.38,
     "scene": "countdown"
   },
   {
     "word": "time.",
-    "start": 11.6,
-    "end": 12.2,
+    "start": 11.38,
+    "end": 11.78,
     "scene": "countdown"
   },
   {
     "word": "Big",
-    "start": 13.6,
-    "end": 13.85,
+    "start": 13.14,
+    "end": 13.34,
     "scene": "triplet"
   },
   {
     "word": "video.",
-    "start": 13.85,
-    "end": 14.3,
+    "start": 13.34,
+    "end": 13.68,
     "scene": "triplet"
   },
   {
     "word": "Small",
-    "start": 14.7,
-    "end": 15.0,
+    "start": 14.22,
+    "end": 14.26,
     "scene": "triplet"
   },
   {
     "word": "file.",
-    "start": 15.0,
-    "end": 15.4,
+    "start": 14.26,
+    "end": 14.64,
     "scene": "triplet"
   },
   {
     "word": "Same",
-    "start": 15.8,
-    "end": 16.05,
+    "start": 15.08,
+    "end": 15.18,
     "scene": "triplet"
   },
   {
     "word": "resolution.",
-    "start": 16.05,
-    "end": 16.8,
+    "start": 15.18,
+    "end": 15.74,
     "scene": "triplet"
   },
   {
     "word": "Free.",
-    "start": 17.4,
-    "end": 17.9,
+    "start": 17.08,
+    "end": 17.46,
     "scene": "endcard"
   },
   {
     "word": "Link",
-    "start": 18.3,
-    "end": 18.5,
+    "start": 17.76,
+    "end": 17.9,
     "scene": "endcard"
   },
   {
     "word": "in",
-    "start": 18.5,
-    "end": 18.6,
+    "start": 17.9,
+    "end": 18.08,
     "scene": "endcard"
   },
   {
     "word": "bio.",
-    "start": 18.6,
-    "end": 19.0,
+    "start": 18.08,
+    "end": 18.3,
     "scene": "endcard"
   }
 ]

@@ -1,7 +1,7 @@
 """Kokoro TTS: script.txt → public/audio/voiceover.wav, or voice samples to choose from.
 
   .venv/Scripts/python tools/tts.py --samples          → public/audio/samples/<voice>.wav
-  .venv/Scripts/python tools/tts.py --voice am_onyx    → public/audio/voiceover.wav
+  .venv/Scripts/python tools/tts.py --voice af_heart    → public/audio/voiceover.wav
 """
 import argparse
 from pathlib import Path
@@ -13,7 +13,7 @@ from kokoro import KPipeline
 from scriptfile import parse_script, spoken_lines
 
 ROOT = Path(__file__).resolve().parents[1]
-SAMPLE_VOICES = ["am_michael", "am_onyx", "bm_george"]
+SAMPLE_VOICES = ["af_heart", "af_bella", "bf_emma"]
 RATE = 24_000
 SCENE_GAP = 0.45  # silence between scenes, seconds
 
@@ -33,7 +33,7 @@ def synth(voice: str, speed: float) -> np.ndarray:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--samples", action="store_true")
-    ap.add_argument("--voice", default="am_onyx")
+    ap.add_argument("--voice", default="af_heart")
     ap.add_argument("--speed", type=float, default=0.95)
     a = ap.parse_args()
     if a.samples:
