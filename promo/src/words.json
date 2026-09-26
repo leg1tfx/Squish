@@ -1,0 +1,194 @@
+[
+  {
+    "word": "48 MB.",
+    "start": 0.2,
+    "end": 1.3,
+    "scene": "hook"
+  },
+  {
+    "word": "Too",
+    "start": 1.45,
+    "end": 1.62,
+    "scene": "hook"
+  },
+  {
+    "word": "big",
+    "start": 1.62,
+    "end": 1.8,
+    "scene": "hook"
+  },
+  {
+    "word": "to",
+    "start": 1.8,
+    "end": 1.9,
+    "scene": "hook"
+  },
+  {
+    "word": "send.",
+    "start": 1.9,
+    "end": 2.2,
+    "scene": "hook"
+  },
+  {
+    "word": "Meet",
+    "start": 2.8,
+    "end": 3.05,
+    "scene": "title"
+  },
+  {
+    "word": "Pyno's",
+    "start": 3.1,
+    "end": 3.5,
+    "scene": "title"
+  },
+  {
+    "word": "Squish.",
+    "start": 3.5,
+    "end": 4.1,
+    "scene": "title"
+  },
+  {
+    "word": "Drop",
+    "start": 5.0,
+    "end": 5.2,
+    "scene": "hero"
+  },
+  {
+    "word": "in",
+    "start": 5.2,
+    "end": 5.3,
+    "scene": "hero"
+  },
+  {
+    "word": "your",
+    "start": 5.3,
+    "end": 5.45,
+    "scene": "hero"
+  },
+  {
+    "word": "video.",
+    "start": 5.45,
+    "end": 5.95,
+    "scene": "hero"
+  },
+  {
+    "word": "Choose",
+    "start": 6.4,
+    "end": 6.7,
+    "scene": "hero"
+  },
+  {
+    "word": "where",
+    "start": 6.7,
+    "end": 6.9,
+    "scene": "hero"
+  },
+  {
+    "word": "it's",
+    "start": 6.9,
+    "end": 7.05,
+    "scene": "hero"
+  },
+  {
+    "word": "going.",
+    "start": 7.05,
+    "end": 7.6,
+    "scene": "hero"
+  },
+  {
+    "word": "Squish",
+    "start": 9.6,
+    "end": 9.95,
+    "scene": "countdown"
+  },
+  {
+    "word": "makes",
+    "start": 9.95,
+    "end": 10.2,
+    "scene": "countdown"
+  },
+  {
+    "word": "it",
+    "start": 10.2,
+    "end": 10.3,
+    "scene": "countdown"
+  },
+  {
+    "word": "fit.",
+    "start": 10.3,
+    "end": 10.8,
+    "scene": "countdown"
+  },
+  {
+    "word": "Every",
+    "start": 11.3,
+    "end": 11.6,
+    "scene": "countdown"
+  },
+  {
+    "word": "time.",
+    "start": 11.6,
+    "end": 12.2,
+    "scene": "countdown"
+  },
+  {
+    "word": "Big",
+    "start": 13.6,
+    "end": 13.85,
+    "scene": "triplet"
+  },
+  {
+    "word": "video.",
+    "start": 13.85,
+    "end": 14.3,
+    "scene": "triplet"
+  },
+  {
+    "word": "Small",
+    "start": 14.7,
+    "end": 15.0,
+    "scene": "triplet"
+  },
+  {
+    "word": "file.",
+    "start": 15.0,
+    "end": 15.4,
+    "scene": "triplet"
+  },
+  {
+    "word": "Same",
+    "start": 15.8,
+    "end": 16.05,
+    "scene": "triplet"
+  },
+  {
+    "word": "resolution.",
+    "start": 16.05,
+    "end": 16.8,
+    "scene": "triplet"
+  },
+  {
+    "word": "Free.",
+    "start": 17.4,
+    "end": 17.9,
+    "scene": "endcard"
+  },
+  {
+    "word": "Link",
+    "start": 18.3,
+    "end": 18.5,
+    "scene": "endcard"
+  },
+  {
+    "word": "in",
+    "start": 18.5,
+    "end": 18.6,
+    "scene": "endcard"
+  },
+  {
+    "word": "bio.",
+    "start": 18.6,
+    "end": 19.0,
+    "scene": "endcard"
+  }
+]
