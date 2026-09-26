@@ -62,15 +62,15 @@ Das Voiceover ist ruhig, tief und selbstbewusst (Keynote-Sprecher). Die Zeiten s
 ### 5.1 Voiceover
 
 - **Quelle der Wahrheit:** `promo/script.txt`, das Skript aus Abschnitt 3.
-- **Standardweg:** `tools/tts.py` erzeugt mit Kokoro-82M (Apache-2.0) lokal `audio/voiceover.wav`. Zur Auswahl werden 2 bis 3 ruhige englische Stimmen gerendert, der Nutzer wählt eine.
-- **Eigene Datei:** Legt der Nutzer eine eigene Datei als `audio/voiceover.mp3` bzw. `.wav` ab, gilt diese. Die Pipeline danach ist identisch.
+- **Standardweg:** `tools/tts.py` erzeugt mit Kokoro-82M (Apache-2.0) lokal `public/audio/voiceover.wav`. Zur Auswahl werden 2 bis 3 ruhige englische Stimmen gerendert, der Nutzer wählt eine.
+- **Eigene Datei:** Legt der Nutzer eine eigene Datei als `public/audio/voiceover.wav` (andere Formate vorher per ffmpeg umwandeln) ab, gilt diese. Die Pipeline danach ist identisch.
 - **Aussprache:** Wird „Pyno's“ falsch gesprochen, bekommt nur der TTS-Input eine phonetische Schreibweise. `script.txt` und die Typo bleiben unverändert.
 
 ### 5.2 Musik und SFX
 
 - **Song:** „24K Magic“ (Bruno Mars), ab dem punchigen Teil bei etwa 0:23. Der Song ist kommerziell lizenziert. Er wird deshalb **nicht ins MP4 gerendert und nicht committet**.
-- **Guide-Spur:** Der Nutzer legt seine lokale Kopie als `audio/guide.mp3` ab (in `.gitignore`). `src/music.ts` hält `offsetSec` (Einstieg im Song, Start 23,0), `bpm` (107) und `firstBeatSec` (erster Beat nach dem Einstieg, relativ zum Videostart). Die genauen Werte stimmt der Nutzer in Remotion Studio nach Gehör ab.
-- **Vorschau und Render:** Die Guide-Spur läuft nur in Remotion Studio mit. Sie ist über die Prop `withGuide` schaltbar, beim Render ist sie immer aus.
+- **Guide-Spur:** Der Nutzer legt seine lokale Kopie als `public/audio/guide.mp3` ab (in `.gitignore`). `src/music.ts` hält `offsetSec` (Einstieg im Song, Start 23,0), `bpm` (107) und `firstBeatSec` (erster Beat nach dem Einstieg, relativ zum Videostart). Die genauen Werte stimmt der Nutzer in Remotion Studio nach Gehör ab.
+- **Zwei Kompositionen:** `Promo` enthält nie den Song, sie ist die Upload-Version. `PromoPreview` rendert den Song immer mit (ab `offsetSec`, Lautstärke ca. 35 %) und dient nur zum lokalen Ansehen, als `out/promo-preview-with-song.mp4`. Beide sind in Remotion Studio abspielbar.
 - **Posten:** Der Nutzer fügt den Song in TikTok über „Sound hinzufügen“ hinzu, setzt den Startpunkt auf denselben Offset und regelt die Songlautstärke so, dass die Stimme verständlich bleibt. Der Song hat Gesang, deshalb eher leise, etwa 30 bis 40 %. Das funktioniert nur mit einem privaten bzw. Creator-Account. Business-Accounts und Ads haben keinen Zugriff auf den Song.
 - **SFX (lizenzfrei, leise):** weicher Luftzug bei Reveals, feiner Klick beim gold werdenden Chip, tiefer warmer Ton auf dem Endcard. Die SFX sitzen auf Beats.
 - **Mix im MP4:** nur Stimme und SFX. Die letzten ca. 2 s sind ohne Stimme, dort trägt in TikTok der Song.
@@ -82,7 +82,7 @@ Das Voiceover ist ruhig, tief und selbstbewusst (Keynote-Sprecher). Die Zeiten s
 - **Szenenzuordnung:** Die Zuordnung Wort → Szene steht in `script.txt` über Szenen-Marker, zum Beispiel `[hook]`.
 - **Szenenlängen:** Jede Szene beginnt etwa 0,3 s vor ihrem ersten Wort und endet etwa 0,4 s nach ihrem letzten. Die Gesamtdauer der Komposition ergibt sich daraus plus 2 s Ausklang. Es gibt keine fest eingetragenen Frame-Zahlen.
 - **Beat-Raster:** Szenenwechsel rasten auf den nächsten Beat aus `music.ts` ein (bei 107 BPM ca. 0,56 s), sofern die Verschiebung höchstens 0,25 s beträgt. Sonst bleibt der Wechsel an der Sprachzeit. Wort-Reveals folgen immer der Stimme und nie dem Beat.
-- **Stimme auf dem Beat:** Die Voiceover-Datei selbst lässt sich pro Satz verschieben, per Offset in `music.ts`. So landen Satzanfänge auf Beats, ohne die Stimme neu zu erzeugen.
+- **Stimme auf dem Beat:** Die Voiceover-Datei lässt sich pro Szene verschieben, per `sceneShiftSec` in `music.ts`. Der Player spielt sie dazu als Abschnitte pro Szene ab. So landen Satzblöcke auf Beats, ohne die Stimme neu zu erzeugen.
 - **Neue Stimme:** Wird die Stimme getauscht, reicht es, `align.py` neu laufen zu lassen, das Video passt sich an.
 
 ## 6. Technik
@@ -92,7 +92,7 @@ promo/
 ├─ package.json          Remotion und @fontsource, getrennt von der App
 ├─ script.txt            Skript mit Szenen-Markern
 ├─ requirements.txt      kokoro, faster-whisper, soundfile
-├─ audio/                voiceover.*, guide.mp3 (lokal, ignoriert), sfx/*.wav
+├─ public/audio/         voiceover.wav, guide.mp3 (lokal, ignoriert), sfx/*.wav (per ffmpeg synthetisiert)
 ├─ tools/tts.py          Kokoro → audio/voiceover.wav
 ├─ tools/align.py        faster-whisper → src/words.json
 ├─ tools/master.mjs      ffmpeg loudnorm auf −14 LUFS
@@ -133,7 +133,7 @@ promo/
 ## 7. Prüfung und Abnahme
 
 - **Timing:** `timing.ts` bekommt Unit-Tests. Aus einer Beispiel-`words.json` müssen die erwarteten Szenen-Starts und -Dauern entstehen, und kein Wort darf außerhalb seiner Szene liegen. Szenenwechsel rasten nur bei einer Verschiebung von höchstens 0,25 s auf den Beat ein.
-- **Kein Song im Export:** `ffprobe` zeigt genau eine Audiospur, und im Render ist `withGuide` aus.
+- **Kein Song im Upload-Export:** `out/promo-final.mp4` hat genau eine Audiospur, die zur Stimme passt. Nur `PromoPreview` referenziert `guide.mp3`.
 - **Bild:** Pro Szene wird ein Frame per `npx remotion still` gerendert. Geprüft werden Lesbarkeit, der Rand von 120 px und Gold höchstens einmal pro Szene.
 - **Audio:** `ffmpeg -af ebur128` misst etwa −14 LUFS integriert und einen True Peak von höchstens −1 dBTP.
 - **Abnahme:** Der Nutzer gibt am fertigen `out/promo-final.mp4` frei. Zusätzlich prüft er in Studio mit Guide-Spur, ob die Schnitte auf dem Song sitzen.
@@ -141,4 +141,4 @@ promo/
 ## 8. Offene Punkte vor der Umsetzung
 
 - Stimmwahl: Der Nutzer wählt aus 2 bis 3 Kokoro-Proben oder liefert eine eigene Datei.
-- Guide-Spur: Der Nutzer legt „24K Magic“ lokal als `audio/guide.mp3` ab und bestätigt in Remotion Studio den genauen Einstieg (`offsetSec`) und den ersten Beat.
+- Guide-Spur: Der Nutzer legt „24K Magic“ lokal als `public/audio/guide.mp3` ab und bestätigt in Remotion Studio den genauen Einstieg (`offsetSec`) und den ersten Beat.
