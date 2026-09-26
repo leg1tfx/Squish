@@ -1,0 +1,12 @@
+[hook]
+{48 MB.|Forty-eight megabytes.} Too big to send.
+[title]
+Meet Pyno's Squish.
+[hero]
+Drop in your video. Choose where it's going.
+[countdown]
+Squish makes it fit. Every time.
+[triplet]
+Big video. Small file. Same resolution.
+[endcard]
+Free. Link in bio.
