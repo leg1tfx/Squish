@@ -1,10 +1,18 @@
 import { create } from 'zustand'
+import type { RifeState } from '@shared/api'
+import { NO_VULKAN_MESSAGE } from '@shared/interpolation'
 import { buildPlan } from '@shared/planner'
 import { BUILT_IN_PRESETS, DEFAULT_PRESET_ID } from '@shared/presets'
 import type { EncodeProgress, EncodeResult, EncoderId, Plan, Settings, StoreData, VideoInfo } from '@shared/types'
 import { allPresets, settingsFromPreset } from './logic'
 
 export type Screen = 'drop' | 'settings' | 'compare' | 'encoding' | 'done'
+
+export type AddonState =
+  | null
+  | { phase: 'ask' }
+  | { phase: 'downloading'; done: number; total: number }
+  | { phase: 'error'; message: string; retry: boolean }
 
 interface State {
   screen: Screen
@@ -24,6 +32,13 @@ interface State {
   encodeError: { kind: string; message: string; log: string } | null
   preview: { beforeUrl: string; afterUrl: string } | null
   previewError: string | null
+  rife: RifeState | null
+  addon: AddonState
+  /** One-line note shown on the progress screen, e.g. after the add-on was installed. */
+  notice: string | null
+  refreshRife(): Promise<void>
+  confirmAddon(): Promise<void>
+  cancelAddon(): void
   init(): Promise<void>
   openFile(path: string): Promise<void>
   pickPreset(id: string): void
@@ -55,11 +70,20 @@ export const useSquish = create<State>((set, get) => {
     set({ presetId: p.id, settings, edited: false, plan: replan(settings) })
   }
 
+  const begin = async (notice: string | null = null): Promise<void> => {
+    set({ screen: 'encoding', progress: null, log: [], encodeError: null, result: null, notice })
+    const { settings, presetId, edited } = get()
+    const r = await api().encode(settings, { presetId, edited })
+    if (r.ok) set({ result: r.result, screen: 'done' })
+    else if (r.kind === 'aborted') set({ screen: 'settings', notice: null })
+    else set({ encodeError: { kind: r.kind, message: r.message, log: r.log } })
+  }
+
   return {
     screen: 'drop', info: null, thumbUrl: null, available: null, data: null,
     presetId: DEFAULT_PRESET_ID, settings: initialSettings, edited: false, plan: null,
     dropError: null, dropNonce: 0, progress: null, log: [], result: null, encodeError: null,
-    preview: null, previewError: null,
+    preview: null, previewError: null, rife: null, addon: null, notice: null,
 
     async init() {
       const data = await api().store.get()
@@ -68,6 +92,10 @@ export const useSquish = create<State>((set, get) => {
       api().encoders().then((available) => set({ available, plan: replan(get().settings) }))
       api().onProgress((progress) => set({ progress }))
       api().onLog((line) => set((s) => ({ log: [...s.log.slice(-299), line] })))
+      void get().refreshRife()
+      api().rife.onProgress((p) => {
+        if (get().addon?.phase === 'downloading') set({ addon: { phase: 'downloading', done: p.done, total: p.total } })
+      })
     },
 
     async openFile(path) {
@@ -109,16 +137,37 @@ export const useSquish = create<State>((set, get) => {
     },
 
     async startEncode() {
-      set({ screen: 'encoding', progress: null, log: [], encodeError: null, result: null })
-      const { settings, presetId, edited } = get()
-      const r = await api().encode(settings, { presetId, edited })
-      if (r.ok) set({ result: r.result, screen: 'done' })
-      else if (r.kind === 'aborted') set({ screen: 'settings' })
-      else set({ encodeError: { kind: r.kind, message: r.message, log: r.log } })
+      const { plan, rife } = get()
+      if (plan?.interpolation) {
+        if (rife === null || rife.status === 'unavailable') {
+          set({ addon: { phase: 'error', message: 'Smooth motion is not available in this version.', retry: false } })
+          return
+        }
+        if (rife.gpu === 'none') { set({ addon: { phase: 'error', message: NO_VULKAN_MESSAGE, retry: false } }); return }
+        if (rife.status === 'missing') { set({ addon: { phase: 'ask' } }); return }
+      }
+      await begin()
     },
+
+    async refreshRife() { set({ rife: await api().rife.status() }) },
+
+    async confirmAddon() {
+      set({ addon: { phase: 'downloading', done: 0, total: get().rife?.sizeBytes ?? 0 } })
+      const r = await api().rife.install()
+      await get().refreshRife()
+      if (r.ok) { set({ addon: null }); await begin('Add-on installed. Starting your video.'); return }
+      if (r.kind === 'aborted') { set({ addon: null }); return }
+      set({ addon: { phase: 'error', message: r.message, retry: r.kind !== 'gpu' } })
+    },
+
+    cancelAddon() {
+      if (get().addon?.phase === 'downloading') void api().rife.cancelInstall()
+      else set({ addon: null })
+    },
+
     async cancelEncode() { await api().cancel() },
     backToSettings() { set({ screen: 'settings', encodeError: null }) },
-    reset() { set({ screen: 'drop', info: null, thumbUrl: null, result: null, preview: null, progress: null }) },
+    reset() { set({ screen: 'drop', info: null, thumbUrl: null, result: null, preview: null, progress: null, notice: null }) },
     async dismissPromo() { set({ data: await api().store.dismissPromo() }) },
     async setTelemetry(on) { set({ data: await api().store.setTelemetry(on) }) },
     async acknowledgeTelemetryNotice() { set({ data: await api().store.telemetryNoticeSeen() }) }

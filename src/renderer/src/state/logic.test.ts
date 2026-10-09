@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { allPresets, doneSummary, nextPresetName, settingsFromPreset } from './logic'
-import type { StoreData, VideoInfo } from '@shared/types'
+import { addonQuestion, allPresets, doneSummary, downloadLabel, nextPresetName, phaseLabel, settingsFromPreset, smoothDone, smoothHint } from './logic'
+import type { EncodeProgress, Plan, StoreData, VideoInfo } from '@shared/types'
 
 const store: StoreData = {
   version: 1, lastPresetId: 'tiktok', promoDismissed: false, telemetry: 'on', telemetryNoticeSeen: false,
@@ -36,5 +36,29 @@ describe('logic', () => {
   })
   it('suggests the next free preset name', () => {
     expect(nextPresetName(store)).toBe('My preset 2')
+  })
+
+  it('asks for the add-on download with its size', () => {
+    expect(addonQuestion(31_000_000)).toBe('Smooth motion needs a small add-on (about 31.0 MB). Download now?')
+  })
+  it('formats download progress', () => {
+    expect(downloadLabel(12_300_000, 31_000_000)).toBe('12.3 MB of 31.0 MB')
+  })
+  it('warns about time and disk before the run', () => {
+    expect(smoothHint(16_796_160_000)).toBe('Smoothing can take a while and needs about 16.80 GB of free disk space.')
+  })
+  it('summarises a smoothed result and stays silent otherwise', () => {
+    const plan = { interpolation: { targetFps: 120, sourceFps: 30, frames: 1 } } as Plan
+    expect(smoothDone(plan, { fps: 30 } as VideoInfo)).toBe('Frame rate smoothed from 30 fps to 120 fps.')
+    expect(smoothDone({ interpolation: null } as Plan, { fps: 30 } as VideoInfo)).toBeNull()
+  })
+  it('labels each phase of the progress screen', () => {
+    const p = (o: Partial<EncodeProgress>): EncodeProgress => ({ fraction: 0, pass: 1, passes: 1, speed: null, remainingSec: null, encoder: 'cpu', phase: 'encode', ...o })
+    expect(phaseLabel(null)).toBe('STARTING')
+    expect(phaseLabel(p({ phase: 'prepare' }))).toBe('PREPARING FRAMES')
+    expect(phaseLabel(p({ phase: 'interpolate' }))).toBe('SMOOTHING MOTION')
+    expect(phaseLabel(p({}))).toBe('ENCODING')
+    expect(phaseLabel(p({ passes: 2, pass: 1 }))).toBe('PASS 1 OF 2 · ANALYSING')
+    expect(phaseLabel(p({ passes: 2, pass: 2 }))).toBe('PASS 2 OF 2 · ENCODING')
   })
 })
