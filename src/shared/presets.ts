@@ -1,6 +1,6 @@
 import type { Preset } from './types'
 
-const base = { res: 'best', fps: 'best', bitrateKbps: null } as const
+const base = { res: 'best', fps: 'best', interpolate: 'off', bitrateKbps: null } as const
 
 export const BUILT_IN_PRESETS: Preset[] = [
   { id: 'tiktok', label: 'TikTok', builtIn: true, settings: { ...base, audio: 'best', codec: 'h265', maxMB: null } },

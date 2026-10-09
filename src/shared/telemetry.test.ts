@@ -5,7 +5,7 @@ import {
   durationBucket, encodeEvent, encodersProp, extProp, isRendererEvent, modeProp, presetProp, progressBucket, ratioBucket, sizeBucket
 } from './telemetry'
 
-const settings: Settings = { res: '1080', fps: 'best', audio: 'high', codec: 'h264', maxMB: 10, bitrateKbps: null, encoder: 'auto' }
+const settings: Settings = { res: '1080', fps: 'best', audio: 'high', codec: 'h264', maxMB: 10, bitrateKbps: null, interpolate: 'off', encoder: 'auto' }
 const info = { path: 'C:\\Users\\Lou\\Videos\\secret client.mp4', sizeBytes: 120_000_000, durationSec: 42 } as VideoInfo
 const encoders: EncoderId[] = ['nvenc', 'cpu']
 const base = { info, settings, meta: { presetId: 'discord', edited: false }, encoders, lastFraction: 0.6 }

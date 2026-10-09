@@ -18,7 +18,7 @@ describe.skipIf(!has)('encode integration', () => {
   let src = ''
   const run = createRunner(ffmpeg)
   const deps = () => ({ run, tmpDir: dir, fileSize: async (p: string) => (await stat(p)).size, remove: (p: string) => unlink(p).catch(() => {}) })
-  const s = (p: Partial<Settings>): Settings => ({ res: 'best', fps: 'best', audio: 'high', codec: 'h264', maxMB: null, bitrateKbps: null, encoder: 'cpu', ...p })
+  const s = (p: Partial<Settings>): Settings => ({ res: 'best', fps: 'best', audio: 'high', codec: 'h264', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'cpu', ...p })
 
   beforeAll(async () => {
     dir = await mkdtemp(join(tmpdir(), 'squish-int-'))

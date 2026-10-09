@@ -8,7 +8,7 @@ const info = (p: Partial<VideoInfo> = {}): VideoInfo => ({
   hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, ...p
 })
 const s = (p: Partial<Settings> = {}): Settings => ({
-  res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, encoder: 'auto', ...p
+  res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'auto', ...p
 })
 const ALL = ['nvenc', 'amf', 'qsv', 'cpu'] as const
 

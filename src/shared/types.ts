@@ -1,6 +1,7 @@
 export type ResChoice = 'best' | '1440' | '1080' | '720'
 export type FpsChoice = 'best' | '60' | '30'
 export type AudioChoice = 'best' | 'high' | 'standard'
+export type InterpolateChoice = 'off' | '60' | '120'
 export type Codec = 'h264' | 'h265'
 export type EncoderId = 'nvenc' | 'amf' | 'qsv' | 'cpu'
 export type EncoderChoice = 'auto' | EncoderId
@@ -8,6 +9,8 @@ export type EncoderChoice = 'auto' | EncoderId
 export interface Settings {
   res: ResChoice
   fps: FpsChoice
+  /** Optional frame interpolation (RIFE). 'off' keeps the source timing. */
+  interpolate: InterpolateChoice
   audio: AudioChoice
   codec: Codec
   /** null = Auto (constant quality). Number = max size in MB (1 MB = 1e6 bytes). */

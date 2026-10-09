@@ -8,7 +8,7 @@ const info: VideoInfo = {
   videoCodec: 'h264', videoKbps: 80_000, hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false
 }
 const s = (p: Partial<Settings> = {}): Settings => ({
-  res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, encoder: 'auto', ...p
+  res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'auto', ...p
 })
 const pick = (args: string[], flag: string): string | undefined => args[args.indexOf(flag) + 1]
 

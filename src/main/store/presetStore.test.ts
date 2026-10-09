@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { addPreset, cleanLabel, defaultStore, deletePreset, loadStore, renamePreset, saveStore } from './presetStore'
 
-const settings = { res: '1080', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null } as const
+const settings = { res: '1080', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, interpolate: 'off' } as const
 
 describe('presetStore', () => {
   it('returns defaults for a missing file', async () => {
@@ -78,5 +78,22 @@ describe('presetStore', () => {
     expect(await loadStore(file)).toMatchObject({ telemetry: 'off', telemetryNoticeSeen: true })
     await writeFile(file, JSON.stringify({ ...stored, telemetry: 'OFF', telemetryNoticeSeen: 'yes' }), 'utf8')
     expect(await loadStore(file)).toMatchObject({ telemetry: 'off', telemetryNoticeSeen: false })
+  })
+
+  it('adds interpolate: off to presets saved before smooth motion existed and drops unknown values', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'squish-store-'))
+    const file = join(dir, 'presets.json')
+    const { interpolate: _drop, ...old } = settings
+    await writeFile(file, JSON.stringify({
+      version: 1,
+      userPresets: [
+        { id: 'user-1', label: 'Old', builtIn: false, settings: old },
+        { id: 'user-2', label: 'Bad', builtIn: false, settings: { ...old, interpolate: '240' } },
+        { id: 'user-3', label: 'New', builtIn: false, settings: { ...old, interpolate: '120' } }
+      ],
+      lastPresetId: 'tiktok', promoDismissed: false
+    }))
+    const d = await loadStore(file)
+    expect(d.userPresets.map((p) => [p.id, p.settings.interpolate])).toEqual([['user-1', 'off'], ['user-3', '120']])
   })
 })

@@ -8,7 +8,7 @@ const info: VideoInfo = {
   videoCodec: 'h264', videoKbps: 40_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false
 }
 const settings = (p: Partial<Settings> = {}): Settings => ({
-  res: 'best', fps: 'best', audio: 'high', codec: 'h264', maxMB: null, bitrateKbps: null, encoder: 'auto', ...p
+  res: 'best', fps: 'best', audio: 'high', codec: 'h264', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'auto', ...p
 })
 
 function harness(opts: { failEncoders?: string[]; sizes?: number[]; hang?: boolean; stderr?: string }) {

@@ -4,7 +4,7 @@ import type { StoreData, VideoInfo } from '@shared/types'
 
 const store: StoreData = {
   version: 1, lastPresetId: 'tiktok', promoDismissed: false, telemetry: 'on', telemetryNoticeSeen: false,
-  userPresets: [{ id: 'user-1', label: 'My preset 1', builtIn: false, settings: { res: '1080', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null } }]
+  userPresets: [{ id: 'user-1', label: 'My preset 1', builtIn: false, settings: { res: '1080', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, interpolate: 'off' } }]
 }
 const info = { sizeBytes: 1_340_000_000 } as VideoInfo
 

@@ -7,6 +7,7 @@ const RES_VALUES = new Set(['best', '1440', '1080', '720'])
 const FPS_VALUES = new Set(['best', '60', '30'])
 const AUDIO_VALUES = new Set(['best', 'high', 'standard'])
 const CODEC_VALUES = new Set(['h264', 'h265'])
+const INTERPOLATE_VALUES = new Set(['off', '60', '120'])
 
 function isPositiveFiniteNumberOrNull(x: unknown): x is number | null {
   return x === null || (typeof x === 'number' && Number.isFinite(x) && x > 0)
@@ -20,6 +21,7 @@ export function isPresetSettings(x: unknown): x is PresetSettings {
     RES_VALUES.has(s.res) &&
     typeof s.fps === 'string' &&
     FPS_VALUES.has(s.fps) &&
+    (s.interpolate === undefined || (typeof s.interpolate === 'string' && INTERPOLATE_VALUES.has(s.interpolate))) &&
     typeof s.audio === 'string' &&
     AUDIO_VALUES.has(s.audio) &&
     typeof s.codec === 'string' &&
@@ -52,7 +54,7 @@ export async function loadStore(file: string): Promise<StoreData> {
       version: 1,
       userPresets: d.userPresets
         .filter((p) => p && typeof p.id === 'string' && typeof p.label === 'string' && isPresetSettings(p.settings))
-        .map((p) => ({ ...p, builtIn: false })),
+        .map((p) => ({ ...p, builtIn: false, settings: { ...p.settings, interpolate: p.settings.interpolate ?? 'off' } })),
       lastPresetId: typeof d.lastPresetId === 'string' ? d.lastPresetId : DEFAULT_PRESET_ID,
       promoDismissed: d.promoDismissed === true,
       // Missing field (file from 1.0.0) means the default 'on'. A present but unknown value means 'off': when unsure, don't send.
