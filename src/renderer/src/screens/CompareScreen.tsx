@@ -80,7 +80,8 @@ export function CompareScreen() {
           style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
+        {plan.interpolation && <span className="mono" style={{ marginRight: 'auto', fontSize: 12, color: 'var(--ink-3)' }}>Preview shows the original frame rate.</span>}
         <motion.button {...pressProps} className="btn btn-ghost" onClick={backToSettings}>Back</motion.button>
         <motion.button {...pressProps} className="btn btn-gold" onClick={() => void startEncode()}>Squish it</motion.button>
       </div>

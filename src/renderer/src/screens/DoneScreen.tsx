@@ -1,11 +1,11 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useEffect } from 'react'
 import { bouncy, pressProps, smooth, snappy } from '../motion'
-import { doneSummary } from '../state/logic'
+import { doneSummary, smoothDone } from '../state/logic'
 import { useSquish } from '../state/store'
 
 export function DoneScreen() {
-  const { result, info, settings, data, reset, dismissPromo } = useSquish()
+  const { result, info, plan, settings, data, reset, dismissPromo } = useSquish()
   const reduced = useReducedMotion()
   const mb = useMotionValue(info ? info.sizeBytes / 1e6 : 0)
   const text = useTransform(mb, (v) => (v >= 1000 ? `${(v / 1000).toFixed(2)} GB` : `${v.toFixed(1)} MB`))
@@ -42,6 +42,7 @@ export function DoneScreen() {
             {doneSummary(info, settings.maxMB, result.bytes)}
           </motion.p>
           {result.fellBack && <p className="mono" style={{ margin: 0, fontSize: 13, color: 'var(--ink-3)' }}>Your GPU encoder failed, finished on CPU.</p>}
+          {plan && info && smoothDone(plan, info) && <p className="mono" style={{ margin: 0, fontSize: 13, color: 'var(--ink-3)' }}>{smoothDone(plan, info)}</p>}
         </div>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...smooth, delay: 0.72 }} style={{ display: 'flex', gap: 8 }}>
           <motion.button {...pressProps} className="btn btn-gold" onClick={() => void window.squish.revealInFolder(result.output)}>Show in folder</motion.button>

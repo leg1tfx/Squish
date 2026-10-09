@@ -1,14 +1,15 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { formatBytes } from '@shared/format'
+import { disabledInterpolate, interpolationDiskBytes, NO_VULKAN_MESSAGE } from '@shared/interpolation'
 import { disabledFps, disabledRes } from '@shared/planner'
-import type { AudioChoice, Codec, EncoderChoice, FpsChoice, ResChoice } from '@shared/types'
+import type { AudioChoice, Codec, EncoderChoice, FpsChoice, InterpolateChoice, ResChoice } from '@shared/types'
 import { ChangesTable } from '../components/ChangesTable'
 import { PresetChips } from '../components/PresetChips'
 import { Segmented } from '../components/Segmented'
 import { SizeReadout } from '../components/SizeReadout'
 import { pressProps, snappy, stagger, enter } from '../motion'
-import { allPresets, nextPresetName } from '../state/logic'
+import { allPresets, nextPresetName, smoothHint } from '../state/logic'
 import { useSquish } from '../state/store'
 
 const ENC_LABEL: Record<string, string> = { nvenc: 'NVIDIA NVENC', amf: 'AMD AMF', qsv: 'Intel QSV', cpu: 'CPU (x264 / x265)' }
@@ -54,6 +55,10 @@ export function SettingsScreen() {
   const { info, plan, settings } = s
   const dRes = disabledRes(info)
   const dFps = disabledFps(info)
+  const dSmooth = disabledInterpolate(info)
+  const smoothOn = s.rife !== null && s.rife.status !== 'unavailable'
+  const noGpu = s.rife?.gpu === 'none'
+  const hint = { margin: '6px 0 0', fontSize: 12, lineHeight: '18px', color: 'var(--ink-3)' } as const
 
   return (
     <div style={{ height: '100%', padding: '28px 32px', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 460px', gap: 40 }}>
@@ -103,6 +108,16 @@ export function SettingsScreen() {
             <Segmented<FpsChoice> id="fps" label="Frame rate" value={settings.fps} onChange={(v) => s.edit({ fps: v })}
               options={[{ value: 'best', label: 'Best' }, { value: '60', label: '60', disabled: dFps.includes('60') }, { value: '30', label: '30' }]} />
           </Row>
+          {smoothOn && (
+            <>
+              <Row label="Smooth motion">
+                <Segmented<InterpolateChoice> id="smooth" label="Smooth motion" value={settings.interpolate} onChange={(v) => s.edit({ interpolate: v })}
+                  options={[{ value: 'off', label: 'Off' }, ...(['60', '120'] as const).map((v) => ({ value: v, label: v, disabled: dSmooth.includes(v) || noGpu }))]} />
+              </Row>
+              {noGpu && <p className="mono" style={hint}>{NO_VULKAN_MESSAGE}</p>}
+              {plan.interpolation && <p className="mono" style={hint}>{smoothHint(interpolationDiskBytes(info, plan))}</p>}
+            </>
+          )}
           {info.hasAudio && (
             <Row label="Audio">
               <Segmented<AudioChoice> id="audio" label="Audio" value={settings.audio} onChange={(v) => s.edit({ audio: v })}

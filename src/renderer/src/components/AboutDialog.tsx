@@ -19,6 +19,9 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             <p style={{ margin: 0, fontSize: 14, lineHeight: '22px', color: 'var(--ink-2)' }}>
               Squish uses FFmpeg, licensed under the GNU GPL v3. FFmpeg runs as a separate program bundled with this app. Its source code is available from the link below.
             </p>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: '22px', color: 'var(--ink-2)' }}>
+              Smooth motion uses RIFE through rife-ncnn-vulkan (MIT license). It is an optional add-on that downloads when you first use it.
+            </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, borderTop: '1px solid var(--hairline)' }}>
               <span id="stats-label" style={{ fontSize: 14, lineHeight: '22px', color: 'var(--ink-2)' }}>Share anonymous stats</span>
               <button role="switch" aria-checked={statsOn} aria-labelledby="stats-label" disabled={!data} onClick={() => void setTelemetry(!statsOn)}

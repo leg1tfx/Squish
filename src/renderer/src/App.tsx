@@ -1,6 +1,7 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { AboutDialog } from './components/AboutDialog'
+import { AddonDialog } from './components/AddonDialog'
 import { TitleBar } from './components/TitleBar'
 import { enter } from './motion'
 import { CompareScreen } from './screens/CompareScreen'
@@ -27,6 +28,7 @@ export function App() {
           </motion.main>
         </AnimatePresence>
         <AboutDialog open={about} onClose={() => setAbout(false)} />
+        <AddonDialog />
       </div>
     </MotionConfig>
   )

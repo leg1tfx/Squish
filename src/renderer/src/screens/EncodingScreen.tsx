@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { TimelineLoader } from '../components/TimelineLoader'
 import { pressProps, smooth } from '../motion'
+import { phaseLabel } from '../state/logic'
 import { useSquish } from '../state/store'
 
 function fmtLeft(sec: number | null): string {
@@ -11,7 +12,7 @@ function fmtLeft(sec: number | null): string {
 }
 
 export function EncodingScreen() {
-  const { progress, log, encodeError, cancelEncode, backToSettings } = useSquish()
+  const { progress, log, encodeError, notice, cancelEncode, backToSettings } = useSquish()
   const [showLog, setShowLog] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(928)
@@ -21,10 +22,14 @@ export function EncodingScreen() {
     return () => ro.disconnect()
   }, [])
   const pct = Math.floor((progress?.fraction ?? 0) * 100)
-  const passLabel = !progress ? 'STARTING' : progress.passes === 2 ? `PASS ${progress.pass} OF 2 · ${progress.pass === 1 ? 'ANALYSING' : 'ENCODING'}` : 'ENCODING'
+  const passLabel = phaseLabel(progress)
 
   if (encodeError) {
-    const title = encodeError.kind === 'disk' ? 'Not enough disk space.' : encodeError.kind === 'size' ? "Couldn't hit that size." : 'Something went wrong.'
+    const title = encodeError.kind === 'disk' ? 'Not enough disk space.'
+      : encodeError.kind === 'size' ? "Couldn't hit that size."
+      : encodeError.kind === 'smooth' ? "Smooth motion didn't work."
+      : encodeError.kind === 'addon' ? 'Add-on missing.'
+      : 'Something went wrong.'
     return (
       <div style={{ height: '100%', padding: '0 96px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 20 }}>
         <div className="kicker" style={{ color: 'var(--negative)' }}>Error</div>
@@ -48,6 +53,7 @@ export function EncodingScreen() {
             {passLabel}
           </div>
           <h1 className="display" style={{ margin: 0, fontSize: 56, lineHeight: '60px', letterSpacing: '-0.015em' }}>Squishing.</h1>
+          {notice && <div role="status" className="mono" style={{ fontSize: 13, color: 'var(--ink-3)' }}>{notice}</div>}
         </div>
         <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Progress" className="display" style={{ fontWeight: 400, fontSize: 76, lineHeight: '76px', color: 'var(--gold-text)', fontVariantNumeric: 'tabular-nums' }}>{pct}%</div>
       </div>
