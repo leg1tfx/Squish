@@ -18,6 +18,12 @@ const api: SquishApi = {
   cancel: () => ipcRenderer.invoke('cancel'),
   onProgress: on('encode:progress'),
   onLog: on('encode:log'),
+  rife: {
+    status: () => ipcRenderer.invoke('rife:status'),
+    install: () => ipcRenderer.invoke('rife:install'),
+    cancelInstall: () => ipcRenderer.invoke('rife:cancelInstall'),
+    onProgress: on('rife:progress')
+  },
   store: {
     get: () => ipcRenderer.invoke('store:get'),
     addPreset: (l, s) => ipcRenderer.invoke('store:add', l, s),

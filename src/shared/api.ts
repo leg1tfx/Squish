@@ -1,4 +1,4 @@
-import type { EncodeErrorKind, EncodeProgress, EncodeResult, EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from './types'
+import type { EncodeErrorKind, EncodeProgress, EncodeResult, EncoderId, PresetSettings, RifeStatus, Settings, StoreData, VideoInfo } from './types'
 import type { RendererEventName } from './telemetry'
 
 export type ProbeResult = { ok: true; info: VideoInfo; thumbUrl: string | null } | { ok: false; message: string }
@@ -6,6 +6,10 @@ export type PreviewResult = { ok: true; beforeUrl: string; afterUrl: string } | 
 export type EncodeOutcome =
   | { ok: true; result: EncodeResult }
   | { ok: false; kind: EncodeErrorKind; message: string; log: string }
+export interface RifeState { status: RifeStatus; gpu: 'unknown' | 'ok' | 'none'; sizeBytes: number }
+export type RifeInstallOutcome =
+  | { ok: true }
+  | { ok: false; kind: 'network' | 'hash' | 'extract' | 'disk' | 'aborted' | 'gpu'; message: string }
 /** What the renderer knows about an encode that main does not: which preset is picked and whether it was edited. */
 export interface EncodeMeta { presetId: string; edited: boolean }
 export interface SquishApi {
@@ -19,6 +23,13 @@ export interface SquishApi {
   cancel(): Promise<void>
   onProgress(cb: (p: EncodeProgress) => void): () => void
   onLog(cb: (line: string) => void): () => void
+  rife: {
+    status(): Promise<RifeState>
+    /** Downloads and verifies the add-on, then checks for a Vulkan GPU. Progress arrives through onProgress. */
+    install(): Promise<RifeInstallOutcome>
+    cancelInstall(): Promise<void>
+    onProgress(cb: (p: { done: number; total: number }) => void): () => void
+  }
   store: {
     get(): Promise<StoreData>
     addPreset(label: string, settings: PresetSettings): Promise<StoreData>

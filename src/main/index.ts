@@ -20,7 +20,8 @@ const env = {
   ffprobe: binPath('ffprobe', { packaged: app.isPackaged, resourcesPath: process.resourcesPath, appPath: app.getAppPath() }),
   tmpDir: join(tmpRoot, 'work'),
   mediaDir: join(tmpRoot, 'media'),
-  storeFile: join(app.getPath('userData'), 'presets.json')
+  storeFile: join(app.getPath('userData'), 'presets.json'),
+  rifeDir: join(app.getPath('userData'), 'rife')
 }
 
 function createWindow(): void {

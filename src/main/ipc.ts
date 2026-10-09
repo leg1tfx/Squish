@@ -1,22 +1,29 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, net, shell } from 'electron'
 import { existsSync } from 'node:fs'
-import { mkdir, rm, stat, unlink } from 'node:fs/promises'
+import { mkdir, readdir, rm, stat, statfs, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { FFMPEG_SOURCE_URL, PROMO_URL } from '@shared/links'
-import type { EncodeMeta, EncodeOutcome, PreviewResult, ProbeResult } from '@shared/api'
+import type { EncodeMeta, EncodeOutcome, PreviewResult, ProbeResult, RifeInstallOutcome, RifeState } from '@shared/api'
+import { NO_VULKAN_MESSAGE } from '@shared/interpolation'
+import { buildPlan } from '@shared/planner'
+import { RIFE_PACK } from '@shared/rifePack'
 import type { EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from '@shared/types'
 import { encodeEvent, encodersProp, extProp, isRendererEvent, VIDEO_EXTENSIONS } from '@shared/telemetry'
 import { detectEncoders } from './ffmpeg/encoders'
 import { probeFile } from './ffmpeg/probe'
-import { createRunner } from './ffmpeg/runner'
+import { createRunner, type Runner } from './ffmpeg/runner'
 import { uniqueOutputPath } from './encode/output'
 import { makePreview, makeThumbnail } from './encode/preview'
+import type { InterpolateDeps } from './encode/interpolate'
 import { EncodeError, runEncode } from './encode/runEncode'
+import { extractZip } from './rife/extract'
+import { probeVulkan } from './rife/gpu'
+import { createInstaller, InstallError, RIFE_EXE, RIFE_MODEL } from './rife/installer'
 import { mediaUrl } from './media'
 import { addPreset, deletePreset, loadStore, renamePreset, saveStore } from './store/presetStore'
 import type { Telemetry } from './telemetry'
 
-export interface IpcEnv { ffmpeg: string; ffprobe: string; tmpDir: string; mediaDir: string; storeFile: string }
+export interface IpcEnv { ffmpeg: string; ffprobe: string; tmpDir: string; mediaDir: string; storeFile: string; rifeDir: string }
 export interface IpcHandle { shutdown(): Promise<void> }
 
 const SHUTDOWN_TIMEOUT_MS = 5000
@@ -38,6 +45,41 @@ export function registerIpc(
   const send = (ch: string, payload: unknown): void => getWindow()?.webContents.send(ch, payload)
   const telemetry = makeTelemetry(async () => (await getStore()).telemetry === 'on')
   void encodersP.then((list) => telemetry.track({ name: 'app_started', props: { encoders: encodersProp(list) } }))
+
+  const installer = createInstaller({ root: env.rifeDir, pack: RIFE_PACK, extract: extractZip, fetch: (url, init) => net.fetch(url, init) })
+  let gpu: RifeState['gpu'] = 'unknown'
+  let installJob: AbortController | null = null
+  const countFiles = async (dir: string): Promise<number> => (await readdir(dir)).length
+  const freeBytes = async (dir: string): Promise<number> => { const s = await statfs(dir); return Number(s.bavail) * Number(s.bsize) }
+  const rifeRunner = (): Runner => createRunner(join(installer.dir(), RIFE_EXE))
+  async function ensureGpu(): Promise<boolean> {
+    if (gpu === 'unknown') {
+      await mkdir(env.tmpDir, { recursive: true })
+      const r = await probeVulkan({
+        ffmpeg: run, rife: rifeRunner(), rifeCwd: installer.dir(), modelDir: join(installer.dir(), RIFE_MODEL),
+        workDir: env.tmpDir, count: countFiles
+      })
+      gpu = r.ok ? 'ok' : 'none'
+    }
+    return gpu === 'ok'
+  }
+
+  ipcMain.handle('rife:status', async (): Promise<RifeState> => ({ status: await installer.status(), gpu, sizeBytes: RIFE_PACK.sizeBytes }))
+  ipcMain.handle('rife:install', async (): Promise<RifeInstallOutcome> => {
+    if (installJob) return { ok: false, kind: 'network', message: 'The add-on is already downloading.' }
+    installJob = new AbortController()
+    try {
+      await installer.install({ signal: installJob.signal, onProgress: (done, total) => send('rife:progress', { done, total }) })
+      if (!(await ensureGpu())) return { ok: false, kind: 'gpu', message: NO_VULKAN_MESSAGE }
+      return { ok: true }
+    } catch (e) {
+      if (e instanceof InstallError) return { ok: false, kind: e.kind, message: e.message }
+      return { ok: false, kind: 'network', message: (e as Error).message }
+    } finally {
+      installJob = null
+    }
+  })
+  ipcMain.handle('rife:cancelInstall', () => { installJob?.abort() })
 
   ipcMain.handle('file:open', async () => {
     const w = getWindow()
@@ -89,9 +131,24 @@ export function registerIpc(
     try {
       await mkdir(env.tmpDir, { recursive: true })
       const output = uniqueOutputPath(current.path, existsSync)
+      const available = await encodersP
+      let interpolate: InterpolateDeps | undefined
+      if (buildPlan(current, settings, available).interpolation) {
+        const st = await installer.status()
+        if (st !== 'installed') {
+          throw new EncodeError('addon', st === 'unavailable' ? 'Smooth motion is not available in this version.' : 'The smooth motion add-on is not installed.')
+        }
+        if (!(await ensureGpu())) throw new EncodeError('smooth', NO_VULKAN_MESSAGE)
+        interpolate = {
+          ffmpeg: run, rife: rifeRunner(), rifeCwd: installer.dir(), modelDir: join(installer.dir(), RIFE_MODEL), tmpDir: env.tmpDir,
+          freeBytes, countFiles,
+          makeDir: async (p) => { await mkdir(p, { recursive: true }) },
+          removeDir: (p) => rm(p, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+        }
+      }
       const result = await runEncode(
-        { info: current, settings, available: await encodersP, output },
-        { run, tmpDir: env.tmpDir, fileSize: async (p) => (await stat(p)).size, remove: (p) => unlink(p).catch(() => {}) },
+        { info: current, settings, available, output },
+        { run, tmpDir: env.tmpDir, fileSize: async (p) => (await stat(p)).size, remove: (p) => unlink(p).catch(() => {}), interpolate },
         {
           progress: (p) => { lastFraction = p.fraction; send('encode:progress', p) },
           log: (l) => send('encode:log', l)
@@ -147,6 +204,7 @@ export function registerIpc(
 
   async function shutdown(): Promise<void> {
     job?.abort()
+    installJob?.abort()
     const inFlight = [encodeInFlight, previewInFlight].filter((p): p is Promise<unknown> => p !== null)
     if (inFlight.length === 0) return
     await Promise.race([
