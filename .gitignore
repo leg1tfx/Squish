@@ -4,3 +4,4 @@ release/
 resources/bin/
 build/icon.png
 *.log
+resources/rife-pack/
