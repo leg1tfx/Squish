@@ -102,3 +102,4 @@ export interface Interpolation {
   /** Number of frames RIFE must produce: round(duration * targetFps). */
   frames: number
 }
+export type RifeStatus = 'unavailable' | 'missing' | 'installed'
