@@ -51,8 +51,12 @@ export type PlanMode = 'quality' | 'target' | 'bitrate'
 
 export interface PlanWarning { text: string; suggest: ResChoice }
 
+export type EncodeErrorKind = 'aborted' | 'disk' | 'ffmpeg' | 'size' | 'smooth' | 'addon'
+
 export interface EncodeProgress {
   fraction: number; pass: number; passes: number; speed: number | null; remainingSec: number | null; encoder: EncoderId
+  /** Which stage is running. Without smooth motion it is always 'encode'. */
+  phase: EncodePhase
 }
 export interface EncodeResult { output: string; bytes: number; encoder: EncoderId; fellBack: boolean; attempts: number }
 

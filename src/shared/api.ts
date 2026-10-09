@@ -1,11 +1,11 @@
-import type { EncodeProgress, EncodeResult, EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from './types'
+import type { EncodeErrorKind, EncodeProgress, EncodeResult, EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from './types'
 import type { RendererEventName } from './telemetry'
 
 export type ProbeResult = { ok: true; info: VideoInfo; thumbUrl: string | null } | { ok: false; message: string }
 export type PreviewResult = { ok: true; beforeUrl: string; afterUrl: string } | { ok: false; message: string }
 export type EncodeOutcome =
   | { ok: true; result: EncodeResult }
-  | { ok: false; kind: 'aborted' | 'disk' | 'ffmpeg' | 'size'; message: string; log: string }
+  | { ok: false; kind: EncodeErrorKind; message: string; log: string }
 /** What the renderer knows about an encode that main does not: which preset is picked and whether it was edited. */
 export interface EncodeMeta { presetId: string; edited: boolean }
 export interface SquishApi {

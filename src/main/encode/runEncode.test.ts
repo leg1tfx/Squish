@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { EncodeError, runEncode, type EncodeDeps } from './runEncode'
 import type { Runner } from '../ffmpeg/runner'
+import type { InterpolateDeps } from './interpolate'
 import type { EncoderId, Settings, VideoInfo } from '@shared/types'
 
 const info: VideoInfo = {
@@ -93,5 +94,68 @@ describe('runEncode', () => {
     expect(e).toBeInstanceOf(EncodeError)
     expect(e.kind).toBe('ffmpeg')
     expect(e.log).toContain('Invalid data')
+  })
+})
+
+describe('runEncode with smooth motion', () => {
+  const info30: VideoInfo = { ...info, fps: 30, fpsFraction: '30/1' }
+  const smooth = (p: Partial<Settings> = {}): Settings => settings({ interpolate: '60', ...p })
+  const req30 = (s: Settings, available: readonly EncoderId[] = ['nvenc', 'cpu']) => ({ info: info30, settings: s, available: [...available], output: 'C:\\out.mp4' })
+  const OK = { code: 0, stderrTail: '', aborted: false }
+
+  function interp() {
+    const steps: string[] = []
+    const removedDirs: string[] = []
+    const counts: Record<string, number> = {}
+    const deps: InterpolateDeps = {
+      ffmpeg: async () => { steps.push('export'); counts['C:\\tmp\\frames-in'] = 300; return OK },
+      rife: async () => { steps.push('rife'); counts['C:\\tmp\\frames-out'] = 600; return OK },
+      rifeCwd: 'C:\\rife', modelDir: 'C:\\rife\\rife-v4.6', tmpDir: 'C:\\tmp',
+      freeBytes: async () => 1e12, countFiles: async (d) => counts[d] ?? 0,
+      makeDir: async () => {}, removeDir: async (p) => { removedDirs.push(p) }, pollMs: 60_000
+    }
+    return { deps, steps, removedDirs }
+  }
+
+  it('interpolates first, then encodes from the frames with audio from the source', async () => {
+    const h = harness({}); const i = interp()
+    const phases: string[] = []
+    const fractions: number[] = []
+    await runEncode(req30(smooth()), { ...h.deps, interpolate: i.deps }, {
+      progress: (p) => { if (phases.at(-1) !== p.phase) phases.push(p.phase); fractions.push(p.fraction) }
+    })
+    expect(i.steps).toEqual(['export', 'rife'])
+    expect(phases).toEqual(['interpolate', 'encode'])
+    expect(fractions.at(-1)).toBeCloseTo(0.85)
+    const enc = h.calls[0]
+    expect(enc[enc.indexOf('-framerate') + 1]).toBe('60')
+    expect(enc).toContain('1:a:0')
+    expect(i.removedDirs).toContain('C:\\tmp\\frames-out')
+  })
+  it('refuses to run without the add-on', async () => {
+    const h = harness({})
+    await expect(runEncode(req30(smooth()), h.deps, {})).rejects.toMatchObject({ kind: 'addon' })
+    expect(h.calls).toHaveLength(0)
+  })
+  it('reuses the frames when the size retry encodes again', async () => {
+    const h = harness({ sizes: [10_400_000, 9_800_000] }); const i = interp()
+    const r = await runEncode(req30(smooth({ maxMB: 10 })), { ...h.deps, interpolate: i.deps }, {})
+    expect(r.attempts).toBe(2)
+    expect(h.calls).toHaveLength(2)
+    expect(i.steps).toEqual(['export', 'rife'])
+  })
+  it('cancelling the encode removes the output and the frames', async () => {
+    const h = harness({ hang: true }); const i = interp()
+    const ac = new AbortController()
+    const p = runEncode(req30(smooth()), { ...h.deps, interpolate: i.deps }, {}, ac.signal)
+    setTimeout(() => ac.abort(), 10)
+    await expect(p).rejects.toMatchObject({ kind: 'aborted' })
+    expect(h.removed).toContain('C:\\out.mp4')
+    expect(i.removedDirs).toContain('C:\\tmp\\frames-out')
+  })
+  it('never touches the add-on when smooth motion is off', async () => {
+    const h = harness({}); const i = interp()
+    await runEncode(req30(settings()), { ...h.deps, interpolate: i.deps }, {})
+    expect(i.steps).toEqual([])
   })
 })

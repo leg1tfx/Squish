@@ -87,3 +87,12 @@ describe('encodeEvent', () => {
     expect(e).toEqual({ name: 'encode_failed', props: { kind: 'disk', preset: 'custom', codec: 'h264', encoder_choice: 'auto', encoders: 'cpu,nvenc' } })
   })
 })
+
+describe('encodeEvent: smooth motion failures', () => {
+  it('reports them as plain ffmpeg failures so the event schema stays unchanged', () => {
+    for (const kind of ['smooth', 'addon'] as const) {
+      const e = encodeEvent({ ...base, outcome: { ok: false, kind, message: 'm', log: '' } })
+      expect(e).toMatchObject({ name: 'encode_failed', props: { kind: 'ffmpeg' } })
+    }
+  })
+})

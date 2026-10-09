@@ -81,6 +81,6 @@ export function encodeEvent({ outcome, info, settings, meta, encoders, lastFract
   if (outcome.kind === 'aborted') return { name: 'encode_cancelled', props: { progress: progressBucket(lastFraction) } }
   return {
     name: 'encode_failed',
-    props: { kind: outcome.kind, preset: presetProp(meta.presetId), codec: settings.codec, encoder_choice: settings.encoder, encoders: encodersProp(encoders) }
+    props: { kind: outcome.kind === 'smooth' || outcome.kind === 'addon' ? 'ffmpeg' : outcome.kind, preset: presetProp(meta.presetId), codec: settings.codec, encoder_choice: settings.encoder, encoders: encodersProp(encoders) }
   }
 }
