@@ -19,6 +19,14 @@ describe('sampleWindow', () => {
 })
 
 describe('makePreview', () => {
+  it('ignores smooth motion so the sample keeps the source frame rate', async () => {
+    const calls: string[][] = []
+    const run: Runner = async (a) => { calls.push(a); return { code: 0, stderrTail: '', aborted: false } }
+    await makePreview(run, { info: info(134), settings: { ...s, interpolate: '120' }, available: ['cpu'] }, 'C:\p')
+    const vf = calls[1][calls[1].indexOf('-vf') + 1]
+    expect(vf).toContain('fps=30')
+    expect(vf).not.toContain('fps=120')
+  })
   it('encodes before (x264 crf 12), after (single pass, same plan) and an H.264 display copy for H.265', async () => {
     const calls: string[][] = []
     const run: Runner = async (a) => { calls.push(a); return { code: 0, stderrTail: '', aborted: false } }

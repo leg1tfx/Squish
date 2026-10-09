@@ -47,7 +47,8 @@ export async function makePreview(
   if (b.code !== 0) { await cleanup(); throw new Error('Preview failed (before).') }
 
   const encodeAfter = async (encoder?: EncoderId): Promise<{ ok: boolean; codec: string }> => {
-    const base = buildPlan(info, req.settings, req.available, encoder ? { encoder } : {})
+    // The 5 s sample never interpolates; the Compare screen says so.
+    const base = buildPlan(info, { ...req.settings, interpolate: 'off' }, req.available, encoder ? { encoder } : {})
     const plan = { ...base, passes: 1 as const }
     const args = buildArgs(info, plan, { input: info.path, output: raw, sample: win })
     const r = await run(args, { signal })

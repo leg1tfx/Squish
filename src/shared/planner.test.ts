@@ -129,3 +129,37 @@ describe('buildPlan: changes', () => {
     expect(c.some((x) => x.label === 'AUDIO')).toBe(false)
   })
 })
+
+describe('buildPlan: smooth motion', () => {
+  const src30 = (p: Partial<VideoInfo> = {}): VideoInfo => info({ width: 1920, height: 1080, fps: 30, fpsFraction: '30/1', ...p })
+  it('is off by default', () => {
+    expect(buildPlan(src30(), s(), ['cpu']).interpolation).toBeNull()
+  })
+  it('raises 30 fps to 120 with an exact frame target', () => {
+    const p = buildPlan(src30(), s({ interpolate: '120' }), ['cpu'])
+    expect(p).toMatchObject({ fps: 120, fpsExpr: '120', interpolation: { targetFps: 120, sourceFps: 30, frames: 16_080 } })
+  })
+  it('interpolation wins over the fps choice', () => {
+    expect(buildPlan(src30(), s({ interpolate: '60', fps: '30' }), ['cpu'])).toMatchObject({ fps: 60, interpolation: { targetFps: 60 } })
+  })
+  it('does not interpolate when the source already reaches the target', () => {
+    expect(buildPlan(info({ fps: 60 }), s({ interpolate: '60' }), ['cpu']).interpolation).toBeNull()
+    expect(buildPlan(info({ fps: 59.94, fpsFraction: '60000/1001' }), s({ interpolate: '60' }), ['cpu'])).toMatchObject({ interpolation: null, fpsExpr: '60000/1001' })
+  })
+  it('handles fractional source rates with the exact duration', () => {
+    const p = buildPlan(src30({ fps: 29.97, fpsFraction: '30000/1001', durationSec: 10.01 }), s({ interpolate: '60' }), ['cpu'])
+    expect(p.interpolation).toEqual({ targetFps: 60, sourceFps: 29.97, frames: 601 })
+  })
+  it('does not interpolate clips with fewer than 2 source frames', () => {
+    expect(buildPlan(src30({ durationSec: 0.03 }), s({ interpolate: '120' }), ['cpu']).interpolation).toBeNull()
+  })
+  it('shows the interpolated rate in the changes table', () => {
+    const rows = buildPlan(src30(), s({ interpolate: '120' }), ['cpu']).changes
+    expect(rows.find((r) => r.label === 'FRAME RATE')).toEqual({ label: 'FRAME RATE', from: '30 fps', to: '120 fps (interpolated)' })
+  })
+  it('warns about a tight size limit using the interpolated rate', () => {
+    const base = src30()
+    expect(buildPlan(base, s({ maxMB: 60 }), ['cpu']).warning).toBeNull()
+    expect(buildPlan(base, s({ maxMB: 60, interpolate: '120' }), ['cpu']).warning).toMatchObject({ suggest: '720' })
+  })
+})

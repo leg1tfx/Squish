@@ -1,4 +1,5 @@
 import { codecLabel, formatFps, resLabel } from './format'
+import { INTERP_TOLERANCE, interpTarget } from './interpolation'
 import type {
   AudioChoice, Change, Codec, EncoderChoice, EncoderId, FpsChoice, Plan, PlanMode, PlanWarning, ResChoice, Settings, VideoInfo
 } from './types'
@@ -72,7 +73,10 @@ function changesFor(info: VideoInfo, p: Omit<Plan, 'changes'>): Change[] {
   const rows: Change[] = []
   const sameDims = p.width === even(info.width) && p.height === even(info.height)
   rows.push({ label: 'RESOLUTION', from: `${info.width}×${info.height}`, to: sameDims ? 'kept' : `${p.width}×${p.height}` })
-  rows.push({ label: 'FRAME RATE', from: formatFps(info.fps), to: Math.abs(p.fps - info.fps) < 0.01 ? 'kept' : formatFps(p.fps) })
+  rows.push({
+    label: 'FRAME RATE', from: formatFps(info.fps),
+    to: p.interpolation ? `${formatFps(p.fps)} (interpolated)` : Math.abs(p.fps - info.fps) < 0.01 ? 'kept' : formatFps(p.fps)
+  })
   if (p.audioKbps !== null) {
     const from = info.audioKbps > 0 ? `${codecLabel(info.audioCodec)} ${info.audioKbps}k` : codecLabel(info.audioCodec)
     const kept = info.audioCodec === 'aac' && p.audioKbps >= info.audioKbps
@@ -88,7 +92,10 @@ export function buildPlan(
   info: VideoInfo, s: Settings, available: EncoderId[], override: { encoder?: EncoderId; videoKbps?: number } = {}
 ): Plan {
   const { width, height } = outputDims(info, s.res)
-  const { fps, expr } = outputFps(info, s.fps)
+  const target = interpTarget(s.interpolate)
+  // Needs at least 2 source frames and a source clearly slower than the target.
+  const interp = target !== null && info.fps < target - INTERP_TOLERANCE && info.durationSec * info.fps >= 2 ? target : null
+  const { fps, expr } = interp !== null ? { fps: interp, expr: String(interp) } : outputFps(info, s.fps)
   const audioKbps = outputAudio(info, s.audio)
   const encoder = override.encoder ?? resolveEncoder(s.encoder, available)
   const a = audioKbps ?? 0
@@ -112,6 +119,9 @@ export function buildPlan(
 
   const base = {
     mode, encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
+    interpolation: interp !== null
+      ? { targetFps: interp, sourceFps: info.fps, frames: Math.round(info.durationSec * interp) }
+      : null,
     passes: (encoder === 'cpu' && mode === 'target' ? 2 : 1) as 1 | 2,
     estimateBytes,
     warning: warningFor(info, s, width, height, fps, videoKbps)

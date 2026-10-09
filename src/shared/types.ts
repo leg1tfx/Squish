@@ -83,6 +83,8 @@ export interface Plan {
   fps: number
   /** Value for the ffmpeg fps filter, e.g. "60" or "60000/1001". */
   fpsExpr: string
+  /** Non-null when frames are interpolated before encoding. */
+  interpolation: Interpolation | null
   /** null when the source has no audio. */
   audioKbps: number | null
   videoKbps: number
@@ -90,4 +92,13 @@ export interface Plan {
   estimateBytes: number
   warning: PlanWarning | null
   changes: Change[]
+}
+
+export type EncodePhase = 'prepare' | 'interpolate' | 'encode'
+
+export interface Interpolation {
+  targetFps: 60 | 120
+  sourceFps: number
+  /** Number of frames RIFE must produce: round(duration * targetFps). */
+  frames: number
 }
