@@ -13,6 +13,8 @@ export interface ArgsOptions {
   pass?: 1 | 2
   passLogName?: string
   sample?: { startSec: number; durationSec: number }
+  /** Read interpolated PNG frames instead of the source video. Audio still comes from `input`. */
+  frames?: { dir: string; fps: number }
 }
 
 const NAMES: Record<Codec, Record<EncoderId, string>> = {
@@ -31,6 +33,20 @@ export function videoFilter(info: VideoInfo, plan: Plan): string {
   parts.push(`fps=${plan.fpsExpr}`)
   parts.push(`format=${plan.encoder === 'qsv' ? 'nv12' : 'yuv420p'}`)
   return parts.join(',')
+}
+
+export function framesFilter(plan: Plan): string {
+  return `scale=out_color_matrix=bt709,format=${plan.encoder === 'qsv' ? 'nv12' : 'yuv420p'}`
+}
+
+/** Decode, tonemap and scale the source once, at output size, into numbered PNGs for RIFE. */
+export function buildFrameExportArgs(info: VideoInfo, plan: Plan, o: { input: string; dir: string }): string[] {
+  const parts: string[] = []
+  if (info.hdr) parts.push(...TONEMAP_CHAIN)
+  if (plan.width !== info.width || plan.height !== info.height) parts.push(`scale=${plan.width}:${plan.height}:flags=lanczos`)
+  parts.push(`fps=${info.fpsFraction.replace(/\/1$/, '')}`, 'format=rgb24')
+  return ['-hide_banner', '-nostdin', '-y', '-progress', 'pipe:1', '-nostats', '-i', o.input,
+    '-map', '0:v:0', '-vf', parts.join(','), '-start_number', '1', `${o.dir}\\%08d.png`]
 }
 
 function rateArgs(plan: Plan): string[] {
@@ -74,14 +90,22 @@ function encoderArgs(plan: Plan, o: ArgsOptions): string[] {
 
 export function buildArgs(info: VideoInfo, plan: Plan, o: ArgsOptions): string[] {
   const a: string[] = ['-hide_banner', '-nostdin', '-y', '-progress', 'pipe:1', '-nostats']
-  if (o.sample) a.push('-ss', String(o.sample.startSec))
-  a.push('-i', o.input)
-  if (o.sample) a.push('-t', String(o.sample.durationSec))
-  a.push('-map', '0:v:0')
   const withAudio = plan.audioKbps !== null && o.pass !== 1
-  if (withAudio) a.push('-map', '0:a:0')
-  a.push('-vf', videoFilter(info, plan))
-  if (info.hdr) a.push('-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709')
+  if (o.frames) {
+    a.push('-framerate', String(o.frames.fps), '-i', `${o.frames.dir}\\%08d.png`)
+    if (withAudio) a.push('-i', o.input)
+    a.push('-map', '0:v:0')
+    if (withAudio) a.push('-map', '1:a:0')
+    a.push('-vf', framesFilter(plan))
+  } else {
+    if (o.sample) a.push('-ss', String(o.sample.startSec))
+    a.push('-i', o.input)
+    if (o.sample) a.push('-t', String(o.sample.durationSec))
+    a.push('-map', '0:v:0')
+    if (withAudio) a.push('-map', '0:a:0')
+    a.push('-vf', videoFilter(info, plan))
+  }
+  if (info.hdr || o.frames) a.push('-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709')
   a.push(...encoderArgs(plan, o))
   if (o.pass === 1) {
     a.push('-an', '-f', 'null', 'NUL')

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildArgs, videoFilter } from './ffmpegArgs'
+import { buildArgs, buildFrameExportArgs, videoFilter } from './ffmpegArgs'
 import { buildPlan } from './planner'
 import type { Settings, VideoInfo } from './types'
 
@@ -85,5 +85,65 @@ describe('buildArgs', () => {
     expect(a.indexOf('-ss')).toBeLessThan(a.indexOf('-i'))
     expect(pick(a, '-ss')).toBe('64.5')
     expect(pick(a, '-t')).toBe('5')
+  })
+})
+
+describe('frame pipeline args', () => {
+  const src = { ...info, width: 1920, height: 1080, fps: 30, fpsFraction: '30/1', durationSec: 10 }
+  const plan = buildPlan(src, s({ interpolate: '120' }), ['cpu'])
+  const out = 'C:\\out\\a_squish.mp4'
+
+  it('exports PNG frames at output size with the exact source rate', () => {
+    const a = buildFrameExportArgs(src, plan, { input: src.path, dir: 'C:\\w\\frames-in' })
+    expect(pick(a, '-i')).toBe(src.path)
+    expect(pick(a, '-vf')).toBe('fps=30,format=rgb24')
+    expect(a.at(-1)).toBe('C:\\w\\frames-in\\%08d.png')
+    expect(pick(a, '-progress')).toBe('pipe:1')
+  })
+  it('keeps the fractional source rate and tonemaps HDR before scaling', () => {
+    const hdr = { ...src, hdr: true, fps: 29.97, fpsFraction: '30000/1001', width: 3840, height: 2160 }
+    const p = buildPlan(hdr, s({ interpolate: '60', res: '1080' }), ['cpu'])
+    const vf = pick(buildFrameExportArgs(hdr, p, { input: hdr.path, dir: 'D:\\f' }), '-vf')!
+    expect(vf.startsWith('zscale=t=linear:npl=100')).toBe(true)
+    expect(vf).toContain('scale=1920:1080:flags=lanczos')
+    expect(vf.endsWith('fps=30000/1001,format=rgb24')).toBe(true)
+  })
+  it('uses the even output size for odd and portrait sources', () => {
+    const odd = { ...src, width: 1081, height: 1921 }
+    const vf = pick(buildFrameExportArgs(odd, buildPlan(odd, s({ interpolate: '60' }), ['cpu']), { input: odd.path, dir: 'D:\\f' }), '-vf')!
+    expect(vf).toContain('scale=1082:1922:flags=lanczos')
+    const portrait = { ...src, width: 2160, height: 3840 }
+    const vf2 = pick(buildFrameExportArgs(portrait, buildPlan(portrait, s({ interpolate: '60', res: '1080' }), ['cpu']), { input: portrait.path, dir: 'D:\\f' }), '-vf')!
+    expect(vf2).toContain('scale=1080:1920:flags=lanczos')
+  })
+  it('encodes from frames with audio from the source and BT.709 tags', () => {
+    const a = buildArgs(src, plan, { input: src.path, output: out, frames: { dir: 'C:\\w\\frames-out', fps: 120 } })
+    const i = a.indexOf('-framerate')
+    expect(a.slice(i, i + 4)).toEqual(['-framerate', '120', '-i', 'C:\\w\\frames-out\\%08d.png'])
+    expect(a.filter((x) => x === '-i')).toHaveLength(2)
+    expect(a.lastIndexOf('-i')).toBeGreaterThan(i)
+    expect(a[a.lastIndexOf('-i') + 1]).toBe(src.path)
+    expect(a).toContain('1:a:0')
+    expect(a).not.toContain('0:a:0')
+    expect(pick(a, '-vf')).toBe('scale=out_color_matrix=bt709,format=yuv420p')
+    expect(pick(a, '-colorspace')).toBe('bt709')
+    expect(a.at(-1)).toBe(out)
+  })
+  it('uses nv12 for QSV and has a single input for silent sources and pass 1', () => {
+    const qsv = buildArgs(src, buildPlan(src, s({ interpolate: '60' }), ['qsv', 'cpu']), { input: src.path, output: out, frames: { dir: 'F', fps: 60 } })
+    expect(pick(qsv, '-vf')).toBe('scale=out_color_matrix=bt709,format=nv12')
+    const silent = { ...src, hasAudio: false, audioKbps: 0, audioCodec: '' }
+    const a = buildArgs(silent, buildPlan(silent, s({ interpolate: '60' }), ['cpu']), { input: silent.path, output: out, frames: { dir: 'F', fps: 60 } })
+    expect(a.filter((x) => x === '-i')).toHaveLength(1)
+    expect(a).toContain('-an')
+    const t = buildPlan(src, s({ interpolate: '60', maxMB: 10 }), ['cpu'])
+    const p1 = buildArgs(src, t, { input: src.path, output: out, pass: 1, passLogName: 'squish2pass', frames: { dir: 'F', fps: 60 } })
+    expect(p1.filter((x) => x === '-i')).toHaveLength(1)
+    expect(p1.slice(-3)).toEqual(['-f', 'null', 'NUL'])
+  })
+  it('leaves the normal path untouched', () => {
+    const a = buildArgs(src, buildPlan(src, s(), ['cpu']), { input: src.path, output: out })
+    expect(a).not.toContain('-framerate')
+    expect(pick(a, '-vf')).toBe('fps=30,format=yuv420p')
   })
 })
