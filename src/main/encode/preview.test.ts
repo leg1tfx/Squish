@@ -5,7 +5,7 @@ import type { Settings, VideoInfo } from '@shared/types'
 
 const info = (d: number): VideoInfo => ({
   path: 'C:\\in.mp4', sizeBytes: 1, durationSec: d, width: 1920, height: 1080, fps: 30, fpsFraction: '30/1',
-  videoCodec: 'h264', videoKbps: 1, hasAudio: false, audioCodec: '', audioKbps: 0, hdr: false, tenBit: false
+  videoCodec: 'h264', videoKbps: 1, hasAudio: false, audioCodec: '', audioKbps: 0, hdr: false, bitDepth: 8
 })
 const s: Settings = { res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: 10, bitrateKbps: null, interpolate: 'off', encoder: 'auto' }
 

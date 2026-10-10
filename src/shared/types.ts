@@ -45,8 +45,10 @@ export interface VideoInfo {
   audioCodec: string
   audioKbps: number
   hdr: boolean
-  /** Source video has 10 or more bits per channel. */
-  tenBit: boolean
+  /** Bits per channel of the source, capped at 12 (the most HEVC can carry). */
+  bitDepth: 8 | 10 | 12
+  /** Colour tags of the source, used to keep HDR. */
+  colorTags?: { primaries: string; trc: string; space: string }
 }
 
 export type PlanMode = 'quality' | 'target' | 'bitrate'
@@ -91,8 +93,10 @@ export interface Plan {
   fpsExpr: string
   /** Non-null when frames are interpolated before encoding. */
   interpolation: Interpolation | null
-  /** Encode as 10-bit (HEVC Main10). Follows the source automatically. */
-  tenBit: boolean
+  /** Output bits per channel. Follows the source automatically; above 8 only with HEVC. */
+  bitDepth: 8 | 10 | 12
+  /** Keep HDR (no tone mapping). Follows the source automatically; HEVC only. */
+  hdr: boolean
   /** null when the source has no audio. */
   audioKbps: number | null
   videoKbps: number

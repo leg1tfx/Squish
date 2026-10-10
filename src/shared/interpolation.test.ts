@@ -5,7 +5,7 @@ import type { Settings, VideoInfo } from './types'
 
 const info = (p: Partial<VideoInfo> = {}): VideoInfo => ({
   path: 'C:\v\a.mp4', sizeBytes: 1e8, durationSec: 30, width: 1920, height: 1080, fps: 30, fpsFraction: '30/1',
-  videoCodec: 'h264', videoKbps: 20_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false, tenBit: false, ...p
+  videoCodec: 'h264', videoKbps: 20_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false, bitDepth: 8, ...p
 })
 const s = (p: Partial<Settings> = {}): Settings => ({
   res: 'best', fps: 'best', interpolate: 'off', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, encoder: 'auto', ...p

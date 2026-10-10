@@ -46,10 +46,12 @@ export async function makePreview(
   const b = await run(display(info.path, sdr(info, [EVEN_SCALE]), beforePath), { signal })
   if (b.code !== 0) { await cleanup(); throw new Error('Preview failed (before).') }
 
+  let keepsHdr = false
   const encodeAfter = async (encoder?: EncoderId): Promise<{ ok: boolean; codec: string }> => {
     // The 5 s sample never interpolates; the Compare screen says so.
     const base = buildPlan(info, { ...req.settings, interpolate: 'off' }, req.available, encoder ? { encoder } : {})
     const plan = { ...base, passes: 1 as const }
+    keepsHdr = plan.hdr
     const args = buildArgs(info, plan, { input: info.path, output: raw, sample: win })
     const r = await run(args, { signal })
     return { ok: r.code === 0, codec: plan.codec }
@@ -58,7 +60,8 @@ export async function makePreview(
   if (!a.ok) a = await encodeAfter('cpu')
   if (!a.ok) { await cleanup(); throw new Error('Preview failed (after).') }
 
-  const conv = await run(['-hide_banner', '-nostdin', '-y', '-i', raw, '-map', '0:v:0', '-an',
+  // The display copy is always 8-bit SDR; a kept-HDR sample is tone mapped here so the preview does not look washed out.
+  const conv = await run(['-hide_banner', '-nostdin', '-y', '-i', raw, '-map', '0:v:0', '-an', '-vf', [...(keepsHdr ? TONEMAP_CHAIN : []), 'format=yuv420p'].join(','),
     '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '12', finalPath], { signal })
   await remove(raw)
   if (conv.code !== 0) { await cleanup(); throw new Error('Preview failed (display copy).') }

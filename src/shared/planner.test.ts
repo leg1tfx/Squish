@@ -5,7 +5,7 @@ import type { Settings, VideoInfo } from './types'
 const info = (p: Partial<VideoInfo> = {}): VideoInfo => ({
   path: 'C:\\v\\a.mp4', sizeBytes: 1_340_000_000, durationSec: 134,
   width: 3840, height: 2160, fps: 60, fpsFraction: '60/1', videoCodec: 'h264', videoKbps: 80_000,
-  hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, tenBit: false, ...p
+  hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, bitDepth: 8, ...p
 })
 const s = (p: Partial<Settings> = {}): Settings => ({
   res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'auto', ...p
@@ -119,21 +119,32 @@ describe('buildPlan: changes', () => {
     ])
   })
   it('lists lowered values and HDR conversion', () => {
-    const c = buildPlan(info({ hdr: true }), s({ res: '1080', audio: 'standard' }), ['cpu']).changes
+    const c = buildPlan(info({ hdr: true }), s({ res: '1080', audio: 'standard', codec: 'h264' }), ['cpu']).changes
     expect(c.find((x) => x.label === 'RESOLUTION')?.to).toBe('1920×1080')
     expect(c.find((x) => x.label === 'AUDIO')?.to).toBe('AAC 128k')
     expect(c.find((x) => x.label === 'HDR')).toEqual({ label: 'HDR', from: 'HDR', to: 'SDR' })
   })
-  it('keeps 10-bit for HEVC only, and never with smooth motion', () => {
-    const ten = info({ tenBit: true })
-    expect(buildPlan(ten, s({ codec: 'h265' }), ['cpu']).tenBit).toBe(true)
+  it('keeps the bit depth for HEVC only, and never with smooth motion', () => {
+    const ten = info({ bitDepth: 10 })
+    expect(buildPlan(ten, s({ codec: 'h265' }), ['cpu']).bitDepth).toBe(10)
     expect(buildPlan(ten, s({ codec: 'h265' }), ['cpu']).changes.find((x) => x.label === 'COLOR')).toEqual({ label: 'COLOR', from: '10-bit', to: 'kept' })
-    expect(buildPlan(ten, s({ codec: 'h264' }), ['cpu']).tenBit).toBe(false)
+    expect(buildPlan(ten, s({ codec: 'h264' }), ['cpu']).bitDepth).toBe(8)
     expect(buildPlan(ten, s({ codec: 'h264' }), ['cpu']).changes.find((x) => x.label === 'COLOR')?.to).toBe('8-bit')
-    expect(buildPlan(info({ tenBit: false }), s({ codec: 'h265' }), ['cpu']).tenBit).toBe(false)
-    expect(buildPlan(info({ tenBit: false }), s({ codec: 'h265' }), ['cpu']).changes.some((x) => x.label === 'COLOR')).toBe(false)
-    const slow = info({ tenBit: true, fps: 30, fpsFraction: '30/1' })
-    expect(buildPlan(slow, s({ codec: 'h265', interpolate: '60' }), ['cpu']).tenBit).toBe(false)
+    expect(buildPlan(info(), s({ codec: 'h265' }), ['cpu']).bitDepth).toBe(8)
+    expect(buildPlan(info(), s({ codec: 'h265' }), ['cpu']).changes.some((x) => x.label === 'COLOR')).toBe(false)
+    const slow = info({ bitDepth: 10, fps: 30, fpsFraction: '30/1' })
+    expect(buildPlan(slow, s({ codec: 'h265', interpolate: '60' }), ['cpu']).bitDepth).toBe(8)
+  })
+  it('keeps HDR with HEVC and tone maps otherwise', () => {
+    const h = info({ hdr: true, bitDepth: 10 })
+    expect(buildPlan(h, s({ codec: 'h265' }), ['cpu']).hdr).toBe(true)
+    expect(buildPlan(h, s({ codec: 'h265' }), ['cpu']).changes.find((x) => x.label === 'HDR')?.to).toBe('kept')
+    expect(buildPlan(h, s({ codec: 'h264' }), ['cpu']).hdr).toBe(false)
+    expect(buildPlan(h, s({ codec: 'h264' }), ['cpu']).changes.find((x) => x.label === 'HDR')?.to).toBe('SDR')
+  })
+  it('sends 12-bit to the CPU encoder', () => {
+    const p = buildPlan(info({ bitDepth: 12 }), s({ codec: 'h265' }), ['nvenc', 'cpu'])
+    expect([p.bitDepth, p.encoder]).toEqual([12, 'cpu'])
   })
   it('omits the audio row for silent video', () => {
     const c = buildPlan(info({ hasAudio: false, audioKbps: 0, audioCodec: '' }), s(), ['cpu']).changes

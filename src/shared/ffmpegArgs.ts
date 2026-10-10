@@ -28,18 +28,18 @@ const QUALITY: Record<EncoderId, Record<Codec, string>> = {
 
 export function videoFilter(info: VideoInfo, plan: Plan): string {
   const parts: string[] = []
-  if (info.hdr) parts.push(...TONEMAP_CHAIN)
+  if (info.hdr && !plan.hdr) parts.push(...TONEMAP_CHAIN)
   if (plan.width !== info.width || plan.height !== info.height) parts.push(`scale=${plan.width}:${plan.height}:flags=lanczos`)
   parts.push(`fps=${plan.fpsExpr}`)
   parts.push(`format=${pixFmt(plan)}`)
   return parts.join(',')
 }
 
-/** Hardware encoders take semi-planar input (nv12, or p010le for 10-bit); libx265 takes planar. */
+/** Hardware encoders take semi-planar input (nv12, or p010le for 10-bit); libx265 takes planar. 12-bit is CPU only. */
 function pixFmt(plan: Plan): string {
-  const hw = plan.encoder === 'qsv'
-  if (plan.tenBit) return plan.encoder === 'cpu' ? 'yuv420p10le' : 'p010le'
-  return hw ? 'nv12' : 'yuv420p'
+  if (plan.bitDepth === 12) return 'yuv420p12le'
+  if (plan.bitDepth === 10) return plan.encoder === 'cpu' ? 'yuv420p10le' : 'p010le'
+  return plan.encoder === 'qsv' ? 'nv12' : 'yuv420p'
 }
 
 export function framesFilter(plan: Plan): string {
@@ -112,7 +112,8 @@ export function buildArgs(info: VideoInfo, plan: Plan, o: ArgsOptions): string[]
     if (withAudio) a.push('-map', '0:a:0')
     a.push('-vf', videoFilter(info, plan))
   }
-  if (info.hdr || o.frames) a.push('-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709')
+  if (plan.hdr && info.colorTags) a.push('-color_primaries', info.colorTags.primaries, '-color_trc', info.colorTags.trc, '-colorspace', info.colorTags.space)
+  else if (info.hdr || o.frames) a.push('-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709')
   a.push(...encoderArgs(plan, o))
   if (o.pass === 1) {
     a.push('-an', '-f', 'null', 'NUL')

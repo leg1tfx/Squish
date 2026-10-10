@@ -84,8 +84,8 @@ function changesFor(info: VideoInfo, p: Omit<Plan, 'changes'>): Change[] {
   }
   const srcM = info.videoKbps > 0 ? ` ${(info.videoKbps / 1000).toFixed(0)}M` : ''
   rows.push({ label: 'VIDEO', from: `${codecLabel(info.videoCodec)}${srcM}`, to: `${codecLabel(p.codec)} ${(p.videoKbps / 1000).toFixed(1)}M` })
-  if (info.hdr) rows.push({ label: 'HDR', from: 'HDR', to: 'SDR' })
-  if (info.tenBit) rows.push({ label: 'COLOR', from: '10-bit', to: p.tenBit ? 'kept' : '8-bit' })
+  if (info.hdr) rows.push({ label: 'HDR', from: 'HDR', to: p.hdr ? 'kept' : 'SDR' })
+  if (info.bitDepth > 8) rows.push({ label: 'COLOR', from: `${info.bitDepth}-bit`, to: p.bitDepth === info.bitDepth ? 'kept' : `${p.bitDepth}-bit` })
   return rows
 }
 
@@ -98,7 +98,6 @@ export function buildPlan(
   const interp = target !== null && info.fps < target - INTERP_TOLERANCE && info.durationSec * info.fps >= 2 ? target : null
   const { fps, expr } = interp !== null ? { fps: interp, expr: String(interp) } : outputFps(info, s.fps)
   const audioKbps = outputAudio(info, s.audio)
-  const encoder = override.encoder ?? resolveEncoder(s.encoder, available)
   const a = audioKbps ?? 0
   const dur = info.durationSec
 
@@ -118,11 +117,15 @@ export function buildPlan(
 
   const estimateBytes = Math.round(((videoKbps + a) * 1000 * dur) / 8)
 
-  // 10-bit only where it plays everywhere (HEVC). Smooth motion goes through 8-bit PNG frames, so it stays 8-bit.
-  const tenBit = info.tenBit && s.codec === 'h265' && interp === null
+  // Above 8 bit and HDR only where they play everywhere (HEVC). Smooth motion goes through 8-bit PNG frames, so it stays 8-bit SDR.
+  const deep = s.codec === 'h265' && interp === null
+  const bitDepth = deep ? info.bitDepth : 8
+  const hdr = deep && info.hdr
+  // No GPU encoder does 12-bit, so it goes to the CPU.
+  const encoder = override.encoder ?? (bitDepth === 12 ? 'cpu' : resolveEncoder(s.encoder, available))
 
   const base = {
-    mode, tenBit, encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
+    mode, bitDepth, hdr, encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
     interpolation: interp !== null
       ? { targetFps: interp, sourceFps: info.fps, frames: Math.round(info.durationSec * interp) }
       : null,

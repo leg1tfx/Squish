@@ -7,8 +7,8 @@ export interface RifePack { version: string; url: string; sha256: string; sizeBy
 export const RIFE_PACK: RifePack = {
   version: 'rife-pack-1',
   url: 'https://github.com/leg1tfx/Squish/releases/download/rife-pack-1/rife-pack-1.zip',
-  sha256: '',
-  sizeBytes: 0
+  sha256: 'd9ccbf0cba9b6041dd80486916ed6ebc4f771226e98f2972f84090dd4c6fd47e',
+  sizeBytes: 12240249
 }
 
 export function rifePackReady(pack: RifePack = RIFE_PACK): boolean {
