@@ -10,6 +10,7 @@ export class ProbeError extends Error {
 interface Stream {
   codec_type?: string; codec_name?: string; width?: number; height?: number
   avg_frame_rate?: string; r_frame_rate?: string; bit_rate?: string; color_transfer?: string
+  pix_fmt?: string; bits_per_raw_sample?: string
   disposition?: { attached_pic?: number }; side_data_list?: { rotation?: number }[]; tags?: { rotate?: string }
 }
 interface ProbeJson { format?: { duration?: string; bit_rate?: string }; streams?: Stream[] }
@@ -44,6 +45,7 @@ export function parseProbe(json: unknown, path: string, sizeBytes: number): Vide
     fps: r.fps, fpsFraction: r.fraction,
     videoCodec: v.codec_name ?? 'unknown', videoKbps,
     hasAudio: Boolean(a), audioCodec: a?.codec_name ?? '', audioKbps,
+    tenBit: Number(v.bits_per_raw_sample) >= 10 || /(10|12|14|16)(le|be)$|p010|p012|p016/.test(v.pix_fmt ?? ''),
     hdr: v.color_transfer === 'smpte2084' || v.color_transfer === 'arib-std-b67'
   }
 }

@@ -31,12 +31,19 @@ export function videoFilter(info: VideoInfo, plan: Plan): string {
   if (info.hdr) parts.push(...TONEMAP_CHAIN)
   if (plan.width !== info.width || plan.height !== info.height) parts.push(`scale=${plan.width}:${plan.height}:flags=lanczos`)
   parts.push(`fps=${plan.fpsExpr}`)
-  parts.push(`format=${plan.encoder === 'qsv' ? 'nv12' : 'yuv420p'}`)
+  parts.push(`format=${pixFmt(plan)}`)
   return parts.join(',')
 }
 
+/** Hardware encoders take semi-planar input (nv12, or p010le for 10-bit); libx265 takes planar. */
+function pixFmt(plan: Plan): string {
+  const hw = plan.encoder === 'qsv'
+  if (plan.tenBit) return plan.encoder === 'cpu' ? 'yuv420p10le' : 'p010le'
+  return hw ? 'nv12' : 'yuv420p'
+}
+
 export function framesFilter(plan: Plan): string {
-  return `scale=out_color_matrix=bt709,format=${plan.encoder === 'qsv' ? 'nv12' : 'yuv420p'}`
+  return `scale=out_color_matrix=bt709,format=${pixFmt(plan)}`
 }
 
 /** Decode, tonemap and scale the source once, at output size, into numbered PNGs for RIFE. */

@@ -6,7 +6,7 @@ import type { EncoderId, Settings, VideoInfo } from '@shared/types'
 
 const info: VideoInfo = {
   path: 'C:\\in.mp4', sizeBytes: 5e8, durationSec: 10, width: 1920, height: 1080, fps: 60, fpsFraction: '60/1',
-  videoCodec: 'h264', videoKbps: 40_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false
+  videoCodec: 'h264', videoKbps: 40_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false, tenBit: false
 }
 const settings = (p: Partial<Settings> = {}): Settings => ({
   res: 'best', fps: 'best', audio: 'high', codec: 'h264', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'auto', ...p

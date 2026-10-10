@@ -7,7 +7,7 @@ import { prepareFrames, type InterpolateDeps } from './interpolate'
 
 const info: VideoInfo = {
   path: 'C:\\in.mp4', sizeBytes: 5e8, durationSec: 10, width: 1920, height: 1080, fps: 30, fpsFraction: '30/1',
-  videoCodec: 'h264', videoKbps: 20_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false
+  videoCodec: 'h264', videoKbps: 20_000, hasAudio: true, audioCodec: 'aac', audioKbps: 192, hdr: false, tenBit: false
 }
 const settings: Settings = { res: 'best', fps: 'best', interpolate: '60', audio: 'high', codec: 'h264', maxMB: null, bitrateKbps: null, encoder: 'auto' }
 const plan = buildPlan(info, settings, ['cpu'])

@@ -37,6 +37,20 @@ describe.skipIf(!has)('encode integration', () => {
     expect((await readdir(dir)).some((f) => f.startsWith('squish2pass'))).toBe(false)
   }, 120_000)
 
+  it('keeps 10-bit automatically for a 10-bit source in H.265', async () => {
+    const ten = join(dir, 'ten.mp4')
+    const mk = await run(['-hide_banner', '-y', '-f', 'lavfi', '-i', 'gradients=s=640x360:r=30:d=2', '-pix_fmt', 'yuv420p10le', '-c:v', 'libx265', '-crf', '14', '-an', ten])
+    expect(mk.code).toBe(0)
+    const info = await probeFile(ffprobe, ten)
+    expect(info.tenBit).toBe(true)
+    const out = join(dir, 'ten-out.mp4')
+    await runEncode({ info, settings: s({ codec: 'h265' }), available: ['cpu'], output: out }, deps(), {})
+    expect((await probeFile(ffprobe, out)).tenBit).toBe(true)
+    const out8 = join(dir, 'ten-out8.mp4')
+    await runEncode({ info, settings: s({ codec: 'h264' }), available: ['cpu'], output: out8 }, deps(), {})
+    expect((await probeFile(ffprobe, out8)).tenBit).toBe(false)
+  }, 120_000)
+
   it('falls back to CPU when the GPU encoder name is broken', async () => {
     const info = await probeFile(ffprobe, src)
     const broken: Runner = (args, o) => run(args.map((a) => (a === 'h264_nvenc' ? 'h264_doesnotexist' : a)), o)

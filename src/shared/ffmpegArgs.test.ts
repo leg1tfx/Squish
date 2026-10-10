@@ -5,7 +5,7 @@ import type { Settings, VideoInfo } from './types'
 
 const info: VideoInfo = {
   path: 'C:\\v\\Pyno\'s clip ä.mp4', sizeBytes: 1e9, durationSec: 134, width: 3840, height: 2160, fps: 60, fpsFraction: '60/1',
-  videoCodec: 'h264', videoKbps: 80_000, hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false
+  videoCodec: 'h264', videoKbps: 80_000, hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, tenBit: false
 }
 const s = (p: Partial<Settings> = {}): Settings => ({
   res: 'best', fps: 'best', audio: 'best', codec: 'h265', maxMB: null, bitrateKbps: null, interpolate: 'off', encoder: 'auto', ...p
@@ -22,6 +22,18 @@ describe('videoFilter', () => {
     expect(vf.startsWith('zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv')).toBe(true)
     expect(vf).toContain('scale=1920:1080:flags=lanczos')
     expect(vf.endsWith('fps=60,format=nv12')).toBe(true)
+  })
+})
+
+describe('10-bit', () => {
+  const ten = { ...info, tenBit: true }
+  it('uses planar 10-bit on CPU and p010le on hardware encoders', () => {
+    expect(videoFilter(ten, buildPlan(ten, s(), ['cpu']))).toBe('fps=60,format=yuv420p10le')
+    expect(videoFilter(ten, buildPlan(ten, s(), ['nvenc', 'cpu']))).toBe('fps=60,format=p010le')
+    expect(videoFilter(ten, buildPlan(ten, s(), ['qsv', 'cpu']))).toBe('fps=60,format=p010le')
+  })
+  it('stays 8-bit for H.264', () => {
+    expect(videoFilter(ten, buildPlan(ten, s({ codec: 'h264' }), ['cpu']))).toBe('fps=60,format=yuv420p')
   })
 })
 

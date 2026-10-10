@@ -45,6 +45,8 @@ export interface VideoInfo {
   audioCodec: string
   audioKbps: number
   hdr: boolean
+  /** Source video has 10 or more bits per channel. */
+  tenBit: boolean
 }
 
 export type PlanMode = 'quality' | 'target' | 'bitrate'
@@ -61,7 +63,7 @@ export interface EncodeProgress {
 export interface EncodeResult { output: string; bytes: number; encoder: EncoderId; fellBack: boolean; attempts: number }
 
 export interface Change {
-  label: 'RESOLUTION' | 'FRAME RATE' | 'AUDIO' | 'VIDEO' | 'HDR'
+  label: 'RESOLUTION' | 'FRAME RATE' | 'AUDIO' | 'VIDEO' | 'HDR' | 'COLOR'
   from: string
   /** 'kept' means unchanged quality. */
   to: string
@@ -89,6 +91,8 @@ export interface Plan {
   fpsExpr: string
   /** Non-null when frames are interpolated before encoding. */
   interpolation: Interpolation | null
+  /** Encode as 10-bit (HEVC Main10). Follows the source automatically. */
+  tenBit: boolean
   /** null when the source has no audio. */
   audioKbps: number | null
   videoKbps: number
