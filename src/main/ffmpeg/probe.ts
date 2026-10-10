@@ -10,7 +10,7 @@ export class ProbeError extends Error {
 interface Stream {
   codec_type?: string; codec_name?: string; width?: number; height?: number
   avg_frame_rate?: string; r_frame_rate?: string; bit_rate?: string; color_transfer?: string
-  pix_fmt?: string; bits_per_raw_sample?: string; color_primaries?: string; color_space?: string
+  pix_fmt?: string; bits_per_raw_sample?: string; profile?: string; color_primaries?: string; color_space?: string
   disposition?: { attached_pic?: number }; side_data_list?: { rotation?: number }[]; tags?: { rotate?: string }
 }
 interface ProbeJson { format?: { duration?: string; bit_rate?: string }; streams?: Stream[] }
@@ -21,6 +21,8 @@ function rate(s: string | undefined): { fps: number; fraction: string } | null {
   if (!n || !d) return null
   return { fps: n / d, fraction: `${n}/${d}` }
 }
+
+const PRORES_PROFILES = ['proxy', 'lt', 'standard', 'hq', '4444', '4444 xq']
 
 function depthOf(v: Stream): 8 | 10 | 12 {
   const raw = Number(v.bits_per_raw_sample)
@@ -55,6 +57,7 @@ export function parseProbe(json: unknown, path: string, sizeBytes: number): Vide
     videoCodec: v.codec_name ?? 'unknown', videoKbps,
     hasAudio: Boolean(a), audioCodec: a?.codec_name ?? '', audioKbps,
     bitDepth: depthOf(v),
+    proresProfile: v.codec_name === 'prores' ? PRORES_PROFILES.indexOf((v.profile ?? '').toLowerCase()) : -1,
     is444: /444|gbr|rgb|bgr/.test(v.pix_fmt ?? ''),
     colorTags: { primaries: v.color_primaries ?? 'bt709', trc: v.color_transfer ?? 'bt709', space: v.color_space ?? 'bt709' },
     hdr: v.color_transfer === 'smpte2084' || v.color_transfer === 'arib-std-b67'

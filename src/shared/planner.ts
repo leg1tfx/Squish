@@ -12,6 +12,7 @@ export const ENCODER_ORDER: EncoderId[] = ['nvenc', 'amf', 'qsv', 'cpu']
 export const AUDIO_KBPS: Record<AudioChoice, number> = { best: 320, high: 192, standard: 128 }
 // ProRes 422 HQ is about 3.5 bits per pixel; it has fixed profiles instead of a bitrate.
 export const QUALITY_BPP: Record<Codec, number> = { h264: 0.1, h265: 0.06, prores: 3.5 }
+export const PRORES_BPP = [0.72, 1.64, 2.36, 3.5, 5.3, 8]
 export const WARN_BPP: Record<Codec, number> = { h264: 0.035, h265: 0.022, prores: 0 }
 const RES_SHORT: Record<Exclude<ResChoice, 'best'>, number> = { '1440': 1440, '1080': 1080, '720': 720 }
 const LOWER_RES: Exclude<ResChoice, 'best'>[] = ['1440', '1080', '720']
@@ -95,6 +96,8 @@ export function buildPlan(
 ): Plan {
   const { width, height } = outputDims(info, s.res)
   const prores = s.codec === 'prores'
+  // Keep the source's ProRes profile (HQ from Standard would only inflate the file); otherwise HQ, or 4444 for 4:4:4 sources.
+  const proresProfile = info.proresProfile !== undefined && info.proresProfile >= 0 ? info.proresProfile : info.is444 ? 4 : 3
   const target = interpTarget(s.interpolate)
   // Needs at least 2 source frames and a source clearly slower than the target.
   const interp = target !== null && info.fps < target - INTERP_TOLERANCE && info.durationSec * info.fps >= 2 ? target : null
@@ -107,7 +110,7 @@ export function buildPlan(
   let videoKbps: number
   if (prores) {
     mode = 'quality'
-    videoKbps = Math.round((width * height * fps * QUALITY_BPP.prores * (info.is444 ? 1.5 : 1)) / 1000)
+    videoKbps = Math.round((width * height * fps * PRORES_BPP[proresProfile]) / 1000)
   } else if (s.maxMB !== null) {
     mode = 'target'
     const budget = s.maxMB * 1e6 * SIZE_MARGIN
@@ -131,7 +134,7 @@ export function buildPlan(
   const encoder = override.encoder ?? (bitDepth === 12 || prores ? 'cpu' : resolveEncoder(s.encoder, available))
 
   const base = {
-    mode, bitDepth, hdr, chroma444: prores && Boolean(info.is444), encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
+    mode, bitDepth, hdr, proresProfile, chroma444: prores && proresProfile >= 4, encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
     interpolation: interp !== null
       ? { targetFps: interp, sourceFps: info.fps, frames: Math.round(info.durationSec * interp) }
       : null,

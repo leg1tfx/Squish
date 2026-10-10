@@ -68,7 +68,7 @@ function encoderArgs(plan: Plan, o: ArgsOptions): string[] {
   const name = prores ? '' : NAMES[plan.codec as Lossy][plan.encoder]
   const q = prores ? '' : QUALITY[plan.encoder][plan.codec as Lossy]
   const quality = plan.mode === 'quality'
-  if (plan.codec === 'prores') return ['-c:v', 'prores_ks', '-profile:v', plan.chroma444 ? '4' : '3', '-vendor', 'apl0']
+  if (plan.codec === 'prores') return ['-c:v', 'prores_ks', '-profile:v', String(plan.proresProfile), '-vendor', 'apl0']
   const out: string[] = ['-c:v', name]
   switch (plan.encoder) {
     case 'cpu': {

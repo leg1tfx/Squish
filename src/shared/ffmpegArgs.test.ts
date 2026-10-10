@@ -55,6 +55,14 @@ describe('ProRes', () => {
     expect(a.slice(a.indexOf('-c:v'), a.indexOf('-c:v') + 6)).toEqual(['-c:v', 'prores_ks', '-profile:v', '3', '-vendor', 'apl0'])
     expect(a).not.toContain('-b:v')
   })
+  it('keeps the profile of a ProRes source', () => {
+    const std = { ...info, videoCodec: 'prores', proresProfile: 2 }
+    const p = buildPlan(std, s({ codec: 'prores' }), ['cpu'])
+    expect([p.proresProfile, p.chroma444]).toEqual([2, false])
+    const a = buildArgs(std, p, { input: std.path, output: 'o.mov' })
+    expect(a[a.indexOf('-profile:v') + 1]).toBe('2')
+    expect(buildPlan({ ...info, proresProfile: -1 }, s({ codec: 'prores' }), ['cpu']).proresProfile).toBe(3)
+  })
   it('picks 4444 for 4:4:4 sources and keeps HDR tags', () => {
     const src = { ...info, is444: true, hdr: true, colorTags: { primaries: 'bt2020', trc: 'smpte2084', space: 'bt2020nc' } }
     const p = buildPlan(src, s({ codec: 'prores' }), ['cpu'])

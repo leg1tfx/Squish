@@ -49,6 +49,8 @@ export interface VideoInfo {
   bitDepth: 8 | 10 | 12
   /** Source is 4:4:4 or RGB; ProRes then uses the 4444 profile. */
   is444?: boolean
+  /** ProRes sources only: 0 Proxy, 1 LT, 2 Standard, 3 HQ, 4 4444, 5 4444 XQ. */
+  proresProfile?: number
   /** Colour tags of the source, used to keep HDR. */
   colorTags?: { primaries: string; trc: string; space: string }
 }
@@ -99,7 +101,9 @@ export interface Plan {
   bitDepth: 8 | 10 | 12
   /** Keep HDR (no tone mapping). Follows the source automatically; HEVC only. */
   hdr: boolean
-  /** ProRes only: 4:4:4 (profile 4444) instead of 4:2:2 (HQ). */
+  /** ProRes only: prores_ks profile 0-5 (see VideoInfo.proresProfile). Follows the source, else HQ or 4444. */
+  proresProfile: number
+  /** ProRes only: 4:4:4 (profiles 4444 and up) instead of 4:2:2. */
   chroma444: boolean
   /** null when the source has no audio. */
   audioKbps: number | null

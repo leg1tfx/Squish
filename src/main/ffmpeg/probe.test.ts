@@ -13,7 +13,7 @@ describe('parseProbe', () => {
   it('reads the basics', () => {
     expect(parseProbe(base, 'a.mp4', 123)).toEqual({
       path: 'a.mp4', sizeBytes: 123, durationSec: 134, width: 3840, height: 2160, fps: 60, fpsFraction: '60/1',
-      videoCodec: 'h264', videoKbps: 80_000, hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, bitDepth: 8, is444: false, colorTags: { primaries: 'bt709', trc: 'bt709', space: 'bt709' }
+      videoCodec: 'h264', videoKbps: 80_000, hasAudio: true, audioCodec: 'aac', audioKbps: 320, hdr: false, bitDepth: 8, is444: false, proresProfile: -1, colorTags: { primaries: 'bt709', trc: 'bt709', space: 'bt709' }
     })
   })
   it('swaps width and height for rotated phone video', () => {
@@ -47,6 +47,10 @@ describe('parseProbe', () => {
     expect(t({ bits_per_raw_sample: '10' })).toBe(10)
     expect(t({ pix_fmt: 'yuv422p12le' })).toBe(12)
     expect(t({ pix_fmt: 'yuv444p16le' })).toBe(12)
+  })
+  it('reads the ProRes profile', () => {
+    const t = (profile: string) => { const h = structuredClone(base); Object.assign(h.streams[0], { codec_name: 'prores', profile }); return parseProbe(h, 'a', 1).proresProfile }
+    expect([t('Standard'), t('HQ'), t('4444'), t('Proxy')]).toEqual([2, 3, 4, 0])
   })
   it('ignores cover art and rejects files without video', () => {
     const art = { format: base.format, streams: [{ codec_type: 'video', codec_name: 'mjpeg', width: 600, height: 600, avg_frame_rate: '0/0', disposition: { attached_pic: 1 } }, base.streams[1]] }

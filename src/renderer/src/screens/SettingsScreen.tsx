@@ -12,6 +12,8 @@ import { pressProps, snappy, stagger, enter } from '../motion'
 import { allPresets, nextPresetName, smoothHint } from '../state/logic'
 import { useSquish } from '../state/store'
 
+const PRORES_NAMES = ['Proxy', 'LT', 'Standard', 'HQ', '4444', '4444 XQ']
+
 const ENC_LABEL: Record<string, string> = { nvenc: 'NVIDIA NVENC', amf: 'AMD AMF', qsv: 'Intel QSV', cpu: 'CPU (x264 / x265)' }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -129,7 +131,7 @@ export function SettingsScreen() {
               options={[{ value: 'h264', label: 'H.264' }, { value: 'h265', label: 'H.265' }, { value: 'prores', label: 'ProRes' }]} />
           </Row>
           {settings.codec === 'prores' ? (
-            <p className="mono" style={hint}>ProRes is for editing: very large files, 10-bit, HDR kept. Size, encoder and bitrate are set by the profile ({plan.chroma444 ? '4444' : '422 HQ'}).</p>
+            <p className="mono" style={hint}>ProRes is for editing: very large files, 10-bit, HDR kept. Size, encoder and bitrate are set by the profile ({PRORES_NAMES[plan.proresProfile]}).</p>
           ) : (
             <>
           <Row label="Size">
