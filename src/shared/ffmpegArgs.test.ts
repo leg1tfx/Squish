@@ -46,6 +46,26 @@ describe('10-bit', () => {
   })
 })
 
+describe('ProRes', () => {
+  it('uses prores_ks HQ with 4:2:2 10-bit, ignoring size limits and GPU encoders', () => {
+    const p = buildPlan(info, s({ codec: 'prores', maxMB: 5, encoder: 'auto' }), ['nvenc', 'cpu'])
+    expect([p.encoder, p.mode, p.bitDepth, p.passes]).toEqual(['cpu', 'quality', 10, 1])
+    expect(videoFilter(info, p)).toBe('fps=60,format=yuv422p10le')
+    const a = buildArgs(info, p, { input: info.path, output: 'o.mov' })
+    expect(a.slice(a.indexOf('-c:v'), a.indexOf('-c:v') + 6)).toEqual(['-c:v', 'prores_ks', '-profile:v', '3', '-vendor', 'apl0'])
+    expect(a).not.toContain('-b:v')
+  })
+  it('picks 4444 for 4:4:4 sources and keeps HDR tags', () => {
+    const src = { ...info, is444: true, hdr: true, colorTags: { primaries: 'bt2020', trc: 'smpte2084', space: 'bt2020nc' } }
+    const p = buildPlan(src, s({ codec: 'prores' }), ['cpu'])
+    expect([p.chroma444, p.hdr]).toEqual([true, true])
+    expect(videoFilter(src, p)).toBe('fps=60,format=yuv444p10le')
+    const a = buildArgs(src, p, { input: src.path, output: 'o.mov' })
+    expect(a[a.indexOf('-profile:v') + 1]).toBe('4')
+    expect(a[a.indexOf('-color_trc') + 1]).toBe('smpte2084')
+  })
+})
+
 describe('buildArgs', () => {
   const o = { input: info.path, output: 'C:\\out\\a_squish.mp4' }
 

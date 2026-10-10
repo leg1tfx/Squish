@@ -2,7 +2,7 @@ export type ResChoice = 'best' | '1440' | '1080' | '720'
 export type FpsChoice = 'best' | '60' | '30'
 export type AudioChoice = 'best' | 'high' | 'standard'
 export type InterpolateChoice = 'off' | '60' | '120'
-export type Codec = 'h264' | 'h265'
+export type Codec = 'h264' | 'h265' | 'prores'
 export type EncoderId = 'nvenc' | 'amf' | 'qsv' | 'cpu'
 export type EncoderChoice = 'auto' | EncoderId
 
@@ -47,6 +47,8 @@ export interface VideoInfo {
   hdr: boolean
   /** Bits per channel of the source, capped at 12 (the most HEVC can carry). */
   bitDepth: 8 | 10 | 12
+  /** Source is 4:4:4 or RGB; ProRes then uses the 4444 profile. */
+  is444?: boolean
   /** Colour tags of the source, used to keep HDR. */
   colorTags?: { primaries: string; trc: string; space: string }
 }
@@ -97,6 +99,8 @@ export interface Plan {
   bitDepth: 8 | 10 | 12
   /** Keep HDR (no tone mapping). Follows the source automatically; HEVC only. */
   hdr: boolean
+  /** ProRes only: 4:4:4 (profile 4444) instead of 4:2:2 (HQ). */
+  chroma444: boolean
   /** null when the source has no audio. */
   audioKbps: number | null
   videoKbps: number

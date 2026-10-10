@@ -142,6 +142,10 @@ describe('buildPlan: changes', () => {
     expect(buildPlan(h, s({ codec: 'h264' }), ['cpu']).hdr).toBe(false)
     expect(buildPlan(h, s({ codec: 'h264' }), ['cpu']).changes.find((x) => x.label === 'HDR')?.to).toBe('SDR')
   })
+  it('ignores the size limit for ProRes', () => {
+    const p = buildPlan(info(), s({ codec: 'prores', maxMB: 5 }), ['cpu'])
+    expect([p.mode, p.warning, p.bitDepth]).toEqual(['quality', null, 10])
+  })
   it('sends 12-bit to the CPU encoder', () => {
     const p = buildPlan(info({ bitDepth: 12 }), s({ codec: 'h265' }), ['nvenc', 'cpu'])
     expect([p.bitDepth, p.encoder]).toEqual([12, 'cpu'])

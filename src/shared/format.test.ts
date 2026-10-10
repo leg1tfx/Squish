@@ -13,7 +13,7 @@ describe('format', () => {
   it('labels codecs', () => {
     expect(codecLabel('h264')).toBe('H.264')
     expect(codecLabel('hevc')).toBe('H.265')
-    expect(codecLabel('prores')).toBe('PRORES')
+    expect(codecLabel('prores')).toBe('ProRes')
   })
   it('formats fps without trailing zeros', () => {
     expect(formatFps(60)).toBe('60 fps')

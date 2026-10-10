@@ -79,6 +79,20 @@ describe.skipIf(!has)('encode integration', () => {
     expect((await probeFile(ffprobe, out)).bitDepth).toBe(12)
   }, 120_000)
 
+  it('writes ProRes into a .mov with HDR and 4444 kept', async () => {
+    const hdr = join(dir, 'hdr444.mkv')
+    const mk = await run(['-hide_banner', '-y', '-f', 'lavfi', '-i', 'gradients=s=640x360:r=30:d=2', '-vf', 'format=yuv444p10le', '-c:v', 'libx265', '-crf', '14',
+      '-x265-params', 'log-level=error:colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc', '-an', hdr])
+    expect(mk.code).toBe(0)
+    const info = await probeFile(ffprobe, hdr)
+    expect([info.is444, info.hdr]).toEqual([true, true])
+    const out = join(dir, 'pr.mov')
+    await runEncode({ info, settings: s({ codec: 'prores', maxMB: 1 }), available: ['cpu'], output: out }, deps(), {})
+    const o = await probeFile(ffprobe, out)
+    expect(o).toMatchObject({ videoCodec: 'prores', hdr: true, is444: true })
+    expect(o.colorTags?.primaries).toBe('bt2020')
+  }, 120_000)
+
   it('falls back to CPU when the GPU encoder name is broken', async () => {
     const info = await probeFile(ffprobe, src)
     const broken: Runner = (args, o) => run(args.map((a) => (a === 'h264_nvenc' ? 'h264_doesnotexist' : a)), o)

@@ -10,8 +10,9 @@ export const SIZE_MARGIN = 0.97
 export const MIN_VIDEO_KBPS = 50
 export const ENCODER_ORDER: EncoderId[] = ['nvenc', 'amf', 'qsv', 'cpu']
 export const AUDIO_KBPS: Record<AudioChoice, number> = { best: 320, high: 192, standard: 128 }
-export const QUALITY_BPP: Record<Codec, number> = { h264: 0.1, h265: 0.06 }
-export const WARN_BPP: Record<Codec, number> = { h264: 0.035, h265: 0.022 }
+// ProRes 422 HQ is about 3.5 bits per pixel; it has fixed profiles instead of a bitrate.
+export const QUALITY_BPP: Record<Codec, number> = { h264: 0.1, h265: 0.06, prores: 3.5 }
+export const WARN_BPP: Record<Codec, number> = { h264: 0.035, h265: 0.022, prores: 0 }
 const RES_SHORT: Record<Exclude<ResChoice, 'best'>, number> = { '1440': 1440, '1080': 1080, '720': 720 }
 const LOWER_RES: Exclude<ResChoice, 'best'>[] = ['1440', '1080', '720']
 
@@ -93,6 +94,7 @@ export function buildPlan(
   info: VideoInfo, s: Settings, available: EncoderId[], override: { encoder?: EncoderId; videoKbps?: number } = {}
 ): Plan {
   const { width, height } = outputDims(info, s.res)
+  const prores = s.codec === 'prores'
   const target = interpTarget(s.interpolate)
   // Needs at least 2 source frames and a source clearly slower than the target.
   const interp = target !== null && info.fps < target - INTERP_TOLERANCE && info.durationSec * info.fps >= 2 ? target : null
@@ -103,7 +105,10 @@ export function buildPlan(
 
   let mode: PlanMode
   let videoKbps: number
-  if (s.maxMB !== null) {
+  if (prores) {
+    mode = 'quality'
+    videoKbps = Math.round((width * height * fps * QUALITY_BPP.prores * (info.is444 ? 1.5 : 1)) / 1000)
+  } else if (s.maxMB !== null) {
     mode = 'target'
     const budget = s.maxMB * 1e6 * SIZE_MARGIN
     videoKbps = override.videoKbps ?? Math.max(MIN_VIDEO_KBPS, Math.floor((budget * 8) / dur / 1000 - a))
@@ -118,20 +123,21 @@ export function buildPlan(
   const estimateBytes = Math.round(((videoKbps + a) * 1000 * dur) / 8)
 
   // Above 8 bit and HDR only where they play everywhere (HEVC). Smooth motion goes through 8-bit PNG frames, so it stays 8-bit SDR.
-  const deep = s.codec === 'h265' && interp === null
-  const bitDepth = deep ? info.bitDepth : 8
+  const deep = (s.codec === 'h265' || prores) && interp === null
+  // ffmpeg's ProRes encoder is 10-bit only.
+  const bitDepth = prores ? 10 : deep ? info.bitDepth : 8
   const hdr = deep && info.hdr
   // No GPU encoder does 12-bit, so it goes to the CPU.
-  const encoder = override.encoder ?? (bitDepth === 12 ? 'cpu' : resolveEncoder(s.encoder, available))
+  const encoder = override.encoder ?? (bitDepth === 12 || prores ? 'cpu' : resolveEncoder(s.encoder, available))
 
   const base = {
-    mode, bitDepth, hdr, encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
+    mode, bitDepth, hdr, chroma444: prores && Boolean(info.is444), encoder, codec: s.codec, width, height, fps, fpsExpr: expr, audioKbps, videoKbps,
     interpolation: interp !== null
       ? { targetFps: interp, sourceFps: info.fps, frames: Math.round(info.durationSec * interp) }
       : null,
     passes: (encoder === 'cpu' && mode === 'target' ? 2 : 1) as 1 | 2,
     estimateBytes,
-    warning: warningFor(info, s, width, height, fps, videoKbps)
+    warning: prores ? null : warningFor(info, s, width, height, fps, videoKbps)
   }
   return { ...base, changes: changesFor(info, base) }
 }

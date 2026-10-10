@@ -1,6 +1,6 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import { formatBytes } from '@shared/format'
+import { codecLabel, formatBytes } from '@shared/format'
 import { Segmented } from '../components/Segmented'
 import { TimelineLoader } from '../components/TimelineLoader'
 import { pressProps, smooth, snappy } from '../motion'
@@ -45,7 +45,7 @@ export function CompareScreen() {
   return (
     <div style={{ height: '100%', padding: '24px 32px 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="kicker">{label}{Math.min(plan.width, plan.height)}p · {Math.round(plan.fps)} FPS · {plan.codec === 'h265' ? 'H.265' : 'H.264'}</div>
+        <div className="kicker">{label}{Math.min(plan.width, plan.height)}p · {Math.round(plan.fps)} FPS · {codecLabel(plan.codec)}</div>
         <Segmented<'fit' | '100'> id="zoom" label="Zoom" value={zoom} onChange={setZoom}
           options={[{ value: 'fit', label: 'Fit' }, { value: '100', label: '100%' }]} />
       </div>

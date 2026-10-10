@@ -100,7 +100,7 @@ export async function runEncode(
     let fellBack = false
     let retries = 0
     let attempts = 0
-    const limit = settings.maxMB !== null ? settings.maxMB * 1e6 : Infinity
+    const limit = first.mode === 'target' && settings.maxMB !== null ? settings.maxMB * 1e6 : Infinity
 
     for (;;) {
       const plan = buildPlan(info, settings, available, { encoder, videoKbps })

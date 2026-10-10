@@ -26,7 +26,8 @@ function depthOf(v: Stream): 8 | 10 | 12 {
   const raw = Number(v.bits_per_raw_sample)
   const fmt = v.pix_fmt ?? ''
   const m = /(\d+)(le|be)$/.exec(fmt) ?? /^p0(\d+)/.exec(fmt)
-  const bits = raw > 0 ? raw : m ? Number(m[1]) : 8
+  // pix_fmt is what the decoder really hands over; ProRes, for one, reports 12 raw bits for 10-bit data.
+  const bits = m ? Number(m[1]) : raw > 0 ? raw : 8
   return bits >= 12 ? 12 : bits >= 10 ? 10 : 8
 }
 
@@ -54,6 +55,7 @@ export function parseProbe(json: unknown, path: string, sizeBytes: number): Vide
     videoCodec: v.codec_name ?? 'unknown', videoKbps,
     hasAudio: Boolean(a), audioCodec: a?.codec_name ?? '', audioKbps,
     bitDepth: depthOf(v),
+    is444: /444|gbr|rgb|bgr/.test(v.pix_fmt ?? ''),
     colorTags: { primaries: v.color_primaries ?? 'bt709', trc: v.color_transfer ?? 'bt709', space: v.color_space ?? 'bt709' },
     hdr: v.color_transfer === 'smpte2084' || v.color_transfer === 'arib-std-b67'
   }

@@ -6,7 +6,7 @@ import type { Preset, PresetSettings, StoreData } from '@shared/types'
 const RES_VALUES = new Set(['best', '1440', '1080', '720'])
 const FPS_VALUES = new Set(['best', '60', '30'])
 const AUDIO_VALUES = new Set(['best', 'high', 'standard'])
-const CODEC_VALUES = new Set(['h264', 'h265'])
+const CODEC_VALUES = new Set(['h264', 'h265', 'prores'])
 const INTERPOLATE_VALUES = new Set(['off', '60', '120'])
 
 function isPositiveFiniteNumberOrNull(x: unknown): x is number | null {

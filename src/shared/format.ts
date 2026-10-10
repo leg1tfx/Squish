@@ -7,7 +7,7 @@ export function resLabel(shortSide: number): string {
 }
 
 export function codecLabel(name: string): string {
-  const map: Record<string, string> = { h264: 'H.264', hevc: 'H.265', h265: 'H.265', av1: 'AV1', vp9: 'VP9' }
+  const map: Record<string, string> = { h264: 'H.264', hevc: 'H.265', h265: 'H.265', prores: 'ProRes', av1: 'AV1', vp9: 'VP9' }
   return map[name] ?? name.toUpperCase()
 }
 

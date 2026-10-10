@@ -126,8 +126,12 @@ export function SettingsScreen() {
           )}
           <Row label="Codec">
             <Segmented<Codec> id="codec" label="Codec" value={settings.codec} onChange={(v) => s.edit({ codec: v })}
-              options={[{ value: 'h264', label: 'H.264' }, { value: 'h265', label: 'H.265' }]} />
+              options={[{ value: 'h264', label: 'H.264' }, { value: 'h265', label: 'H.265' }, { value: 'prores', label: 'ProRes' }]} />
           </Row>
+          {settings.codec === 'prores' ? (
+            <p className="mono" style={hint}>ProRes is for editing: very large files, 10-bit, HDR kept. Size, encoder and bitrate are set by the profile ({plan.chroma444 ? '4444' : '422 HQ'}).</p>
+          ) : (
+            <>
           <Row label="Size">
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 112px', gap: 8 }}>
               <Segmented<'auto' | 'max'> id="size" label="Size" value={settings.maxMB === null ? 'auto' : 'max'}
@@ -157,6 +161,8 @@ export function SettingsScreen() {
               {plan.mode === 'bitrate' && <button className="link-btn" aria-label="Back to automatic bitrate" onClick={() => s.edit({ bitrateKbps: null })}>×</button>}
             </label>
           </Row>
+            </>
+          )}
         </motion.div>
 
         <AnimatePresence>

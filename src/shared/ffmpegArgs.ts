@@ -17,11 +17,12 @@ export interface ArgsOptions {
   frames?: { dir: string; fps: number }
 }
 
-const NAMES: Record<Codec, Record<EncoderId, string>> = {
+type Lossy = Exclude<Codec, 'prores'>
+const NAMES: Record<Lossy, Record<EncoderId, string>> = {
   h264: { cpu: 'libx264', nvenc: 'h264_nvenc', amf: 'h264_amf', qsv: 'h264_qsv' },
   h265: { cpu: 'libx265', nvenc: 'hevc_nvenc', amf: 'hevc_amf', qsv: 'hevc_qsv' }
 }
-const QUALITY: Record<EncoderId, Record<Codec, string>> = {
+const QUALITY: Record<EncoderId, Record<Lossy, string>> = {
   cpu: { h264: '20', h265: '23' }, nvenc: { h264: '23', h265: '25' },
   amf: { h264: '23', h265: '25' }, qsv: { h264: '23', h265: '25' }
 }
@@ -37,6 +38,7 @@ export function videoFilter(info: VideoInfo, plan: Plan): string {
 
 /** Hardware encoders take semi-planar input (nv12, or p010le for 10-bit); libx265 takes planar. 12-bit is CPU only. */
 function pixFmt(plan: Plan): string {
+  if (plan.codec === 'prores') return plan.chroma444 ? 'yuv444p10le' : 'yuv422p10le'
   if (plan.bitDepth === 12) return 'yuv420p12le'
   if (plan.bitDepth === 10) return plan.encoder === 'cpu' ? 'yuv420p10le' : 'p010le'
   return plan.encoder === 'qsv' ? 'nv12' : 'yuv420p'
@@ -62,9 +64,11 @@ function rateArgs(plan: Plan): string[] {
 }
 
 function encoderArgs(plan: Plan, o: ArgsOptions): string[] {
-  const name = NAMES[plan.codec][plan.encoder]
-  const q = QUALITY[plan.encoder][plan.codec]
+  const prores = plan.codec === 'prores'
+  const name = prores ? '' : NAMES[plan.codec as Lossy][plan.encoder]
+  const q = prores ? '' : QUALITY[plan.encoder][plan.codec as Lossy]
   const quality = plan.mode === 'quality'
+  if (plan.codec === 'prores') return ['-c:v', 'prores_ks', '-profile:v', plan.chroma444 ? '4' : '3', '-vendor', 'apl0']
   const out: string[] = ['-c:v', name]
   switch (plan.encoder) {
     case 'cpu': {

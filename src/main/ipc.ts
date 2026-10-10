@@ -130,7 +130,7 @@ export function registerIpc(
     let outcome: EncodeOutcome
     try {
       await mkdir(env.tmpDir, { recursive: true })
-      const output = uniqueOutputPath(current.path, existsSync)
+      const output = uniqueOutputPath(current.path, existsSync, settings.codec === 'prores' ? 'mov' : 'mp4')
       const available = await encodersP
       let interpolate: InterpolateDeps | undefined
       if (buildPlan(current, settings, available).interpolation) {
