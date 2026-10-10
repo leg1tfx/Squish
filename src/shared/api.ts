@@ -1,4 +1,5 @@
 import type { EncodeErrorKind, EncodeProgress, EncodeResult, EncoderId, PresetSettings, RifeStatus, Settings, StoreData, VideoInfo } from './types'
+import type { HdrOverride } from './hdr'
 import type { RendererEventName } from './telemetry'
 
 export type ProbeResult = { ok: true; info: VideoInfo; thumbUrl: string | null } | { ok: false; message: string }
@@ -17,6 +18,8 @@ export interface SquishApi {
   pathForFile(file: File): string
   openFileDialog(): Promise<string | null>
   probe(path: string): Promise<ProbeResult>
+  /** Tags the loaded file as HLG or PQ HDR (or back to auto) and returns the file info to plan with. */
+  setHdrOverride(mode: HdrOverride): Promise<VideoInfo | null>
   encoders(): Promise<EncoderId[]>
   preview(settings: Settings): Promise<PreviewResult>
   encode(settings: Settings, meta: EncodeMeta): Promise<EncodeOutcome>

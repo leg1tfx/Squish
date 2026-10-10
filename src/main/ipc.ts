@@ -7,6 +7,7 @@ import type { EncodeMeta, EncodeOutcome, PreviewResult, ProbeResult, RifeInstall
 import { NO_VULKAN_MESSAGE } from '@shared/interpolation'
 import { buildPlan } from '@shared/planner'
 import { RIFE_PACK } from '@shared/rifePack'
+import { applyHdrOverride, type HdrOverride } from '@shared/hdr'
 import type { EncoderId, PresetSettings, Settings, StoreData, VideoInfo } from '@shared/types'
 import { encodeEvent, encodersProp, extProp, isRendererEvent, VIDEO_EXTENSIONS } from '@shared/telemetry'
 import { detectEncoders } from './ffmpeg/encoders'
@@ -36,6 +37,8 @@ export function registerIpc(
   const run = createRunner(env.ffmpeg)
   const encodersP: Promise<EncoderId[]> = detectEncoders(run).catch(() => ['cpu'])
   let info: VideoInfo | null = null
+  /** The probe result before any manual HDR tag. */
+  let baseInfo: VideoInfo | null = null
   let job: AbortController | null = null
   let store: StoreData | null = null
   let encodeInFlight: Promise<unknown> | null = null
@@ -87,15 +90,23 @@ export function registerIpc(
     return r.canceled ? null : r.filePaths[0]
   })
 
+  ipcMain.handle('hdr:set', (_e, mode: HdrOverride): VideoInfo | null => {
+    if (!baseInfo || !['auto', 'hlg', 'pq'].includes(mode)) return info
+    info = applyHdrOverride(baseInfo, mode)
+    return info
+  })
+
   ipcMain.handle('probe', async (_e, path: string): Promise<ProbeResult> => {
     try {
-      info = await probeFile(env.ffprobe, path)
+      baseInfo = await probeFile(env.ffprobe, path)
+      info = baseInfo
       await mkdir(env.mediaDir, { recursive: true })
       const thumb = `thumb-${Date.now()}.jpg`
       const ok = await makeThumbnail(run, info, join(env.mediaDir, thumb))
       return { ok: true, info, thumbUrl: ok ? mediaUrl(thumb) : null }
     } catch {
       info = null
+      baseInfo = null
       void telemetry.track({ name: 'probe_failed', props: { ext: extProp(path) } })
       return { ok: false, message: "Can't read this file." }
     }

@@ -12,6 +12,7 @@ const api: SquishApi = {
   pathForFile: (file) => webUtils.getPathForFile(file),
   openFileDialog: () => ipcRenderer.invoke('file:open'),
   probe: (p) => ipcRenderer.invoke('probe', p),
+  setHdrOverride: (m) => ipcRenderer.invoke('hdr:set', m),
   encoders: () => ipcRenderer.invoke('encoders'),
   preview: (s) => ipcRenderer.invoke('preview', s),
   encode: (s, meta) => ipcRenderer.invoke('encode', s, meta),

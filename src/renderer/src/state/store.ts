@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { RifeState } from '@shared/api'
+import type { HdrOverride } from '@shared/hdr'
 import { NO_VULKAN_MESSAGE } from '@shared/interpolation'
 import { buildPlan } from '@shared/planner'
 import { BUILT_IN_PRESETS, DEFAULT_PRESET_ID } from '@shared/presets'
@@ -17,6 +18,7 @@ export type AddonState =
 interface State {
   screen: Screen
   info: VideoInfo | null
+  hdrMode: HdrOverride
   thumbUrl: string | null
   available: EncoderId[] | null
   data: StoreData | null
@@ -41,6 +43,7 @@ interface State {
   cancelAddon(): void
   init(): Promise<void>
   openFile(path: string): Promise<void>
+  setHdrMode(mode: HdrOverride): Promise<void>
   pickPreset(id: string): void
   edit(patch: Partial<Settings>): void
   savePreset(label: string): Promise<void>
@@ -80,7 +83,7 @@ export const useSquish = create<State>((set, get) => {
   }
 
   return {
-    screen: 'drop', info: null, thumbUrl: null, available: null, data: null,
+    screen: 'drop', info: null, hdrMode: 'auto', thumbUrl: null, available: null, data: null,
     presetId: DEFAULT_PRESET_ID, settings: initialSettings, edited: false, plan: null,
     dropError: null, dropNonce: 0, progress: null, log: [], result: null, encodeError: null,
     preview: null, previewError: null, rife: null, addon: null, notice: null,
@@ -101,7 +104,14 @@ export const useSquish = create<State>((set, get) => {
     async openFile(path) {
       const r = await api().probe(path)
       if (!r.ok) { set((s) => ({ dropError: r.message, dropNonce: s.dropNonce + 1 })); return }
-      set({ info: r.info, thumbUrl: r.thumbUrl, dropError: null, preview: null, screen: 'settings' })
+      set({ info: r.info, hdrMode: 'auto', thumbUrl: r.thumbUrl, dropError: null, preview: null, screen: 'settings' })
+      set({ plan: replan(get().settings) })
+    },
+
+    async setHdrMode(mode) {
+      const info = await api().setHdrOverride(mode)
+      if (!info) return
+      set({ info, hdrMode: mode, preview: null })
       set({ plan: replan(get().settings) })
     },
 
@@ -167,7 +177,7 @@ export const useSquish = create<State>((set, get) => {
 
     async cancelEncode() { await api().cancel() },
     backToSettings() { set({ screen: 'settings', encodeError: null }) },
-    reset() { set({ screen: 'drop', info: null, thumbUrl: null, result: null, preview: null, progress: null, notice: null }) },
+    reset() { set({ screen: 'drop', info: null, hdrMode: 'auto', thumbUrl: null, result: null, preview: null, progress: null, notice: null }) },
     async dismissPromo() { set({ data: await api().store.dismissPromo() }) },
     async setTelemetry(on) { set({ data: await api().store.setTelemetry(on) }) },
     async acknowledgeTelemetryNotice() { set({ data: await api().store.telemetryNoticeSeen() }) }

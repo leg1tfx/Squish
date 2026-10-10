@@ -35,7 +35,7 @@ describe('10-bit', () => {
   it('keeps HDR with HEVC: no tone mapping, source colour tags, 12-bit on CPU', () => {
     const hdr = { ...ten, hdr: true, colorTags: { primaries: 'bt2020', trc: 'smpte2084', space: 'bt2020nc' } }
     const p = buildPlan(hdr, s(), ['cpu'])
-    expect(videoFilter(hdr, p)).toBe('fps=60,format=yuv420p10le')
+    expect(videoFilter(hdr, p)).toBe('fps=60,setparams=color_primaries=bt2020:color_trc=smpte2084:colorspace=bt2020nc,format=yuv420p10le')
     const a = buildArgs(hdr, p, { input: hdr.path, output: 'o.mp4' })
     expect(a.slice(a.indexOf('-color_primaries'), a.indexOf('-color_primaries') + 6)).toEqual(['-color_primaries', 'bt2020', '-color_trc', 'smpte2084', '-colorspace', 'bt2020nc'])
     const t12 = { ...info, bitDepth: 12 as const }
@@ -67,7 +67,7 @@ describe('ProRes', () => {
     const src = { ...info, is444: true, hdr: true, colorTags: { primaries: 'bt2020', trc: 'smpte2084', space: 'bt2020nc' } }
     const p = buildPlan(src, s({ codec: 'prores' }), ['cpu'])
     expect([p.chroma444, p.hdr]).toEqual([true, true])
-    expect(videoFilter(src, p)).toBe('fps=60,format=yuv444p10le')
+    expect(videoFilter(src, p)).toBe('fps=60,setparams=color_primaries=bt2020:color_trc=smpte2084:colorspace=bt2020nc,format=yuv444p10le')
     const a = buildArgs(src, p, { input: src.path, output: 'o.mov' })
     expect(a[a.indexOf('-profile:v') + 1]).toBe('4')
     expect(a[a.indexOf('-color_trc') + 1]).toBe('smpte2084')

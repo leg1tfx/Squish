@@ -58,6 +58,7 @@ export function parseProbe(json: unknown, path: string, sizeBytes: number): Vide
     hasAudio: Boolean(a), audioCodec: a?.codec_name ?? '', audioKbps,
     bitDepth: depthOf(v),
     proresProfile: v.codec_name === 'prores' ? PRORES_PROFILES.indexOf((v.profile ?? '').toLowerCase()) : -1,
+    rgbMatrix: v.color_space === 'gbr',
     is444: /444|gbr|rgb|bgr/.test(v.pix_fmt ?? ''),
     colorTags: { primaries: v.color_primaries ?? 'bt709', trc: v.color_transfer ?? 'bt709', space: v.color_space ?? 'bt709' },
     hdr: v.color_transfer === 'smpte2084' || v.color_transfer === 'arib-std-b67'

@@ -32,6 +32,10 @@ export function videoFilter(info: VideoInfo, plan: Plan): string {
   if (info.hdr && !plan.hdr) parts.push(...TONEMAP_CHAIN)
   if (plan.width !== info.width || plan.height !== info.height) parts.push(`scale=${plan.width}:${plan.height}:flags=lanczos`)
   parts.push(`fps=${plan.fpsExpr}`)
+  // RGB-style YUV (ProRes 4444 from After Effects is tagged gbr) needs an explicit matrix, or it is converted with the wrong one.
+  if (info.rgbMatrix) parts.push(`scale=out_color_matrix=${plan.hdr ? 'bt2020nc' : 'bt709'}`)
+  // The encoder takes its colour tags from the frames, so a manual HDR tag has to be set on them.
+  if (plan.hdr && info.colorTags) parts.push(`setparams=color_primaries=${info.colorTags.primaries}:color_trc=${info.colorTags.trc}:colorspace=${info.colorTags.space}`)
   parts.push(`format=${pixFmt(plan)}`)
   return parts.join(',')
 }

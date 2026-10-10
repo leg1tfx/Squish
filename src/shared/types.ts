@@ -49,6 +49,8 @@ export interface VideoInfo {
   bitDepth: 8 | 10 | 12
   /** Source is 4:4:4 or RGB; ProRes then uses the 4444 profile. */
   is444?: boolean
+  /** Pixels are RGB-style (colour matrix 'gbr', e.g. ProRes 4444 from After Effects) and need an explicit matrix on conversion. */
+  rgbMatrix?: boolean
   /** ProRes sources only: 0 Proxy, 1 LT, 2 Standard, 3 HQ, 4 4444, 5 4444 XQ. */
   proresProfile?: number
   /** Colour tags of the source, used to keep HDR. */

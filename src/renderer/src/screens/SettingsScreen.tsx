@@ -10,6 +10,7 @@ import { Segmented } from '../components/Segmented'
 import { SizeReadout } from '../components/SizeReadout'
 import { pressProps, snappy, stagger, enter } from '../motion'
 import { allPresets, nextPresetName, smoothHint } from '../state/logic'
+import type { HdrOverride } from '@shared/hdr'
 import { useSquish } from '../state/store'
 
 const PRORES_NAMES = ['Proxy', 'LT', 'Standard', 'HQ', '4444', '4444 XQ']
@@ -126,6 +127,11 @@ export function SettingsScreen() {
                 options={[{ value: 'best', label: 'Best' }, { value: 'high', label: 'High' }, { value: 'standard', label: 'Standard' }]} />
             </Row>
           )}
+          <Row label="HDR tag">
+            <Segmented<HdrOverride> id="hdr" label="HDR tag" value={s.hdrMode} onChange={(v) => void s.setHdrMode(v)}
+              options={[{ value: 'auto', label: info.hdr && s.hdrMode === 'auto' ? 'Auto · HDR' : 'Auto' }, { value: 'hlg', label: 'HLG' }, { value: 'pq', label: 'PQ' }]} />
+          </Row>
+          {s.hdrMode !== 'auto' && <p className="mono" style={hint}>Treats this file as {s.hdrMode === 'hlg' ? 'HLG' : 'PQ'} HDR (BT.2020). Use it when your editor wrote HDR pixels without HDR tags.</p>}
           <Row label="Codec">
             <Segmented<Codec> id="codec" label="Codec" value={settings.codec} onChange={(v) => s.edit({ codec: v })}
               options={[{ value: 'h264', label: 'H.264' }, { value: 'h265', label: 'H.265' }, { value: 'prores', label: 'ProRes' }]} />
