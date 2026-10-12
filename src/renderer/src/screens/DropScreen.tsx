@@ -66,7 +66,7 @@ export function DropScreen() {
           <path d="M44 84h32" stroke="var(--gold-text)" strokeWidth="3" />
         </svg>
         <h1 className="display" style={{ margin: 0, fontSize: 56, lineHeight: '60px', letterSpacing: '-0.015em', textAlign: 'center' }}>
-          {over ? 'Let go.' : 'Drop your video here.'}
+          {over ? 'Let go' : 'Drop your video here'}
         </h1>
         {error && <div role="alert" className="mono" style={{ fontSize: 13, color: 'var(--negative)' }}>{error}</div>}
         <motion.button className="btn btn-gold" {...pressProps} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1, transition: bouncy }}
