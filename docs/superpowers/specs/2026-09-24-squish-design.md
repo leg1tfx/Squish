@@ -26,7 +26,7 @@ Pyno's Squish ist eine Windows-Desktop-App, die Videos für Social Media komprim
 | Ausgabe | MP4, Video H.264 oder H.265 (Tag `hvc1`), Audio AAC, `+faststart` |
 | Speicherort | Neben dem Original als `<name>_squish.mp4`. Existiert die Datei, dann `<name>_squish (2).mp4` usw. Es wird nie überschrieben |
 
-**Nicht im Umfang (v1):** Batch, Trimmen, Seitenverhältnis ändern, macOS, Auto-Update, weitere Sprachen.
+**Nicht im Umfang (v1):** Batch, Trimmen, Seitenverhältnis ändern, macOS, weitere Sprachen. (Auto-Update wurde nachträglich ergänzt, siehe `docs/release-checklist.md`.)
 
 ## 3. Ablauf und Screens
 

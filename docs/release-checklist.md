@@ -1,5 +1,21 @@
 # Release checklist
 
+## Shipping an update to customers
+
+Installed copies check for updates at start and every 6 hours, download in the background,
+and install on the next quit (or right away via "Update ready · Restart" in the title bar).
+
+Use the release dashboard: double-click `Update-Dashboard.bat` (or `npm run dashboard`). It shows the version customers have,
+and walks through three buttons: new version number → build installer → publish. It fetches FFmpeg first if `resources/bin` is empty.
+
+One-time Cloudflare R2 setup: see [Cloudflare-R2-Anleitung.md](Cloudflare-R2-Anleitung.md) (German, step by step).
+
+After publishing, test once: start an older installed version, wait a few seconds, check "Update ready · Restart" shows, click it, then check the About dialog shows the new version.
+
+Manual fallback without the dashboard: raise `version` in `package.json`, `npm run dist`, then upload `Pynos-Squish-Setup-<version>.exe`, its `.blockmap` and `latest.yml` (last) from `release/` into the bucket's `squish/` folder.
+
+## Every release
+
 - [ ] `PROMO_URL` in `src/shared/links.ts` points to Pyno's Payhip store (confirmed by Pyno).
 - [ ] `APTABASE_APP_KEY` in `src/shared/links.ts` is the Pyno's Squish key. A packaged build shows up in the Aptabase dashboard under release data (not Debug).
 - [ ] The Payhip product page says the app sends anonymous usage and error stats, and that they can be turned off in About.

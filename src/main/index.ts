@@ -1,4 +1,5 @@
-import { app, BrowserWindow, net, protocol, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, net, protocol, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { release } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -7,6 +8,7 @@ import { cleanupTemp, registerIpc } from './ipc'
 import { MEDIA_SCHEME, mediaFileFor } from './media'
 import { binPath } from './paths'
 import { createTelemetry } from './telemetry'
+import { startUpdater } from './updater'
 
 app.setName("Pyno's Squish")
 app.setAppUserModelId('com.pynos.squish')
@@ -60,6 +62,10 @@ app.whenReady().then(() => {
     isEnabled,
     fetch: (url, init) => net.fetch(url, init)
   }))
+  // Only installed builds update themselves; dev runs have no release feed.
+  const updater = app.isPackaged ? startUpdater(autoUpdater, (s) => win?.webContents.send('update:status', s)) : null
+  ipcMain.handle('update:status', () => updater?.status() ?? { state: 'none' })
+  ipcMain.handle('update:install', () => { updater?.install() })
   app.on('before-quit', (e) => {
     e.preventDefault()
     if (!quitting) {

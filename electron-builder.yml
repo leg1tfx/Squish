@@ -22,3 +22,9 @@ nsis:
   allowToChangeInstallationDirectory: true
   shortcutName: "Pyno's Squish"
   uninstallDisplayName: "Pyno's Squish"
+# Auto-update feed: a Cloudflare R2 bucket served at updates.pynos-ae-suite.de.
+# Upload the .exe, .blockmap and latest.yml from release/ into its squish/ folder.
+# Customers' apps read latest.yml from there.
+publish:
+  provider: generic
+  url: https://updates.pynos-ae-suite.de/squish

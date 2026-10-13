@@ -39,6 +39,11 @@ const api: SquishApi = {
   openPromo: () => ipcRenderer.invoke('open:promo'),
   openFfmpegSource: () => ipcRenderer.invoke('open:ffmpeg'),
   track: (name) => ipcRenderer.send('telemetry:track', name),
+  update: {
+    status: () => ipcRenderer.invoke('update:status'),
+    onStatus: on('update:status'),
+    install: () => ipcRenderer.invoke('update:install')
+  },
   window: {
     minimize: () => ipcRenderer.send('win:minimize'),
     toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),

@@ -14,12 +14,14 @@
     "test:int": "vitest run tests/integration",
     "fetch-ffmpeg": "node scripts/fetch-ffmpeg.mjs",
     "icon": "node scripts/make-icon.mjs",
-    "dist": "npm run typecheck && npm test && npm run build && electron-builder --win"
+    "dist": "npm run typecheck && npm test && npm run build && electron-builder --win --publish never",
+    "dashboard": "node scripts/release-dashboard.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "electron-updater": "^6.8.9",
     "motion": "^13.4.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -30,6 +32,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.2.0",
+    "aws4fetch": "^1.0.20",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",

@@ -13,6 +13,10 @@ export type RifeInstallOutcome =
   | { ok: false; kind: 'network' | 'hash' | 'extract' | 'disk' | 'aborted' | 'gpu'; message: string }
 /** What the renderer knows about an encode that main does not: which preset is picked and whether it was edited. */
 export interface EncodeMeta { presetId: string; edited: boolean }
+export type UpdateStatus =
+  | { state: 'none' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
 export interface SquishApi {
   version: string
   pathForFile(file: File): string
@@ -48,5 +52,10 @@ export interface SquishApi {
   openFfmpegSource(): Promise<void>
   /** Anonymous stats for the promo card. Main ignores any other name and checks consent. */
   track(name: RendererEventName): void
+  update: {
+    status(): Promise<UpdateStatus>
+    onStatus(cb: (s: UpdateStatus) => void): () => void
+    install(): Promise<void>
+  }
   window: { minimize(): void; toggleMaximize(): void; close(): void }
 }
