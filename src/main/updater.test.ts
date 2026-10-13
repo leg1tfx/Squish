@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { UpdateStatus } from '@shared/api'
 import { startUpdater, type UpdaterLike } from './updater'
 
@@ -11,21 +11,45 @@ function fake() {
   }) as unknown as UpdaterLike & EventEmitter & { checkForUpdates: ReturnType<typeof vi.fn>; quitAndInstall: ReturnType<typeof vi.fn> }
 }
 
-afterEach(() => { vi.useRealTimers() })
+const DAY = 24 * 60 * 60 * 1000
+function clock(last: number, now = 100 * DAY) {
+  return { now: () => now, last: () => last, mark: vi.fn() }
+}
+const flush = () => new Promise((r) => setTimeout(r, 0))
 
 describe('startUpdater', () => {
-  it('checks at start, downloads in the background and installs on quit', () => {
+  it('checks at start when never checked, downloads in the background and installs on quit', async () => {
     const u = fake()
-    const h = startUpdater(u, () => {})
+    const c = clock(0)
+    startUpdater(u, () => {}, c)
     expect(u.checkForUpdates).toHaveBeenCalledTimes(1)
     expect(u.autoDownload).toBe(true)
     expect(u.autoInstallOnAppQuit).toBe(true)
-    h.dispose()
+    await flush()
+    expect(c.mark).toHaveBeenCalledWith(100 * DAY)
+  })
+  it('skips the check when the last one is under 30 days old', () => {
+    const u = fake()
+    startUpdater(u, () => {}, clock(80 * DAY))
+    expect(u.checkForUpdates).not.toHaveBeenCalled()
+  })
+  it('checks again once 30 days have passed', () => {
+    const u = fake()
+    startUpdater(u, () => {}, clock(70 * DAY))
+    expect(u.checkForUpdates).toHaveBeenCalledTimes(1)
+  })
+  it('does not record a failed check, so the next start retries', async () => {
+    const u = fake()
+    u.checkForUpdates.mockRejectedValueOnce(new Error('offline'))
+    const c = clock(0)
+    startUpdater(u, () => {}, c)
+    await flush()
+    expect(c.mark).not.toHaveBeenCalled()
   })
   it('reports progress, then ready, and only installs when ready', () => {
     const u = fake()
     const seen: UpdateStatus[] = []
-    const h = startUpdater(u, (s) => seen.push(s))
+    const h = startUpdater(u, (s) => seen.push(s), clock(0))
     h.install()
     expect(u.quitAndInstall).not.toHaveBeenCalled()
     u.emit('update-available', { version: '1.1.0' })
@@ -39,27 +63,12 @@ describe('startUpdater', () => {
     expect(h.status()).toEqual({ state: 'ready', version: '1.1.0' })
     h.install()
     expect(u.quitAndInstall).toHaveBeenCalledWith(true, true)
-    h.dispose()
   })
-  it('stays quiet on errors and retries on the next interval', () => {
-    vi.useFakeTimers()
+  it('stays quiet on download errors', () => {
     const u = fake()
-    const seen: UpdateStatus[] = []
-    const h = startUpdater(u, (s) => seen.push(s), 1000)
+    const h = startUpdater(u, () => {}, clock(0))
     u.emit('update-available', { version: '1.1.0' })
     u.emit('error', new Error('offline'))
     expect(h.status()).toEqual({ state: 'none' })
-    vi.advanceTimersByTime(1000)
-    expect(u.checkForUpdates).toHaveBeenCalledTimes(2)
-    h.dispose()
-  })
-  it('does not check again once an update is ready', () => {
-    vi.useFakeTimers()
-    const u = fake()
-    const h = startUpdater(u, () => {}, 1000)
-    u.emit('update-downloaded', { version: '1.1.0' })
-    vi.advanceTimersByTime(3000)
-    expect(u.checkForUpdates).toHaveBeenCalledTimes(1)
-    h.dispose()
   })
 })

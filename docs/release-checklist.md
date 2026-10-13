@@ -2,7 +2,7 @@
 
 ## Shipping an update to customers
 
-Installed copies check for updates at start and every 6 hours, download in the background,
+Installed copies check for updates at start, at most once every 30 days, download in the background,
 and install on the next quit (or right away via "Update ready · Restart" in the title bar).
 
 Use the release dashboard: double-click `Update-Dashboard.bat` (or `npm run dashboard`). It shows the version customers have,

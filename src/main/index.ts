@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, net, protocol, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { release } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -24,6 +25,15 @@ const env = {
   mediaDir: join(tmpRoot, 'media'),
   storeFile: join(app.getPath('userData'), 'presets.json'),
   rifeDir: join(app.getPath('userData'), 'rife')
+}
+
+function updateClock() {
+  const file = join(app.getPath('userData'), 'update-check.json')
+  return {
+    now: () => Date.now(),
+    last: () => { try { return Number(JSON.parse(readFileSync(file, 'utf8')).last) || 0 } catch { return 0 } },
+    mark: (t: number) => { try { writeFileSync(file, JSON.stringify({ last: t })) } catch { /* next start retries */ } }
+  }
 }
 
 function createWindow(): void {
@@ -63,7 +73,7 @@ app.whenReady().then(() => {
     fetch: (url, init) => net.fetch(url, init)
   }))
   // Only installed builds update themselves; dev runs have no release feed.
-  const updater = app.isPackaged ? startUpdater(autoUpdater, (s) => win?.webContents.send('update:status', s)) : null
+  const updater = app.isPackaged ? startUpdater(autoUpdater, (s) => win?.webContents.send('update:status', s), updateClock()) : null
   ipcMain.handle('update:status', () => updater?.status() ?? { state: 'none' })
   ipcMain.handle('update:install', () => { updater?.install() })
   app.on('before-quit', (e) => {

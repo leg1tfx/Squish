@@ -79,13 +79,13 @@ tests/integration/interpolate.int.test.ts                  (new)
 
 This task is a spike, not TDD. If the verdict is FAIL, **stop and report to the user**. The pipeline in Tasks 4 to 7 assumes RIFE can produce exactly `-n` evenly spaced frames.
 
-- [ ] **Step 1: Create the branch**
+- [x] **Step 1: Create the branch**
 
 ```bash
 git switch -c feat/frame-interpolation
 ```
 
-- [ ] **Step 2: Ignore the pack output**
+- [x] **Step 2: Ignore the pack output**
 
 Append to `.gitignore`:
 
@@ -93,7 +93,7 @@ Append to `.gitignore`:
 resources/rife-pack/
 ```
 
-- [ ] **Step 3: Write the pack builder**
+- [x] **Step 3: Write the pack builder**
 
 Create `scripts/build-rife-pack.mjs`:
 
@@ -154,12 +154,12 @@ try {
 }
 ```
 
-- [ ] **Step 4: Build the pack**
+- [x] **Step 4: Build the pack**
 
 Run: `node scripts/build-rife-pack.mjs`
 Expected: prints the official package contents, then `Pack ready: ...rife-pack-1.zip` and a JSON block with a 64-character `sha256` and `sizeBytes`. Write both values down for Task 12. If the model folder is not called `rife-v4.6`, the script throws: stop and report the real folder names.
 
-- [ ] **Step 5: Write the spike script**
+- [x] **Step 5: Write the spike script**
 
 Create `scripts/rife-spike.mjs`:
 
@@ -246,13 +246,13 @@ console.log(failed ? 'SPIKE RESULT: FAIL' : 'SPIKE RESULT: PASS')
 process.exit(failed ? 1 : 0)
 ```
 
-- [ ] **Step 6: Run the spike**
+- [x] **Step 6: Run the spike**
 
 Run: `node scripts/rife-spike.mjs`
 Expected: four lines ending in `PASS`, a passing vulkan probe, and `SPIKE RESULT: PASS`. Output frames are named `00000001.png` and so on.
 If any line says FAIL, or RIFE reports no Vulkan device: **stop, paste the output to the user, and do not continue.** (A FAIL on frame count or residual means `-n` cannot be used as designed; the user must decide between rounding to an integer factor plus an ffmpeg `fps` trim, or a different model.)
 
-- [ ] **Step 7: Sync the spec with what the plan now knows**
+- [x] **Step 7: Sync the spec with what the plan now knows**
 
 Apply these three replacements in `docs/superpowers/specs/2026-10-09-frame-interpolation-design.md`:
 
@@ -274,7 +274,7 @@ Then append at the end of the spec:
 `-n` mit `rife-v4.6` liefert bei 30 → 60, 30 → 120, 24 → 120 und 25 → 60 genau die gewünschte Frameanzahl, gleichmäßige Abstände (Abweichung höchstens 2 px) und passende Start- und Endposition. Ausgabedateien heißen `00000001.png` und aufwärts. Der Vulkan-Test mit zwei 64×64-Frames funktioniert. (Messwerte stehen in der Ausgabe von `scripts/rife-spike.mjs`.)
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add .gitignore scripts/build-rife-pack.mjs scripts/rife-spike.mjs docs/superpowers/specs/2026-10-09-frame-interpolation-design.md docs/superpowers/plans/2026-10-09-frame-interpolation.md
@@ -293,7 +293,7 @@ git commit -m "chore(smooth): rife pack builder, feasibility spike and spec"
 **Interfaces:**
 - Produces: `type InterpolateChoice = 'off' | '60' | '120'`; `Settings.interpolate: InterpolateChoice` and therefore `PresetSettings.interpolate`. Old stored presets without the field load as `'off'`; unknown values are dropped.
 
-- [ ] **Step 1: Write the failing store test**
+- [x] **Step 1: Write the failing store test**
 
 In `src/main/store/presetStore.test.ts`, change line 7 to include the new field:
 
@@ -322,12 +322,12 @@ and add this test inside the `describe('presetStore', ...)` block (before its cl
   })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/main/store/presetStore.test.ts`
 Expected: FAIL (`user-1` is dropped because the old settings lack nothing the validator knows, but `interpolate` comes back `undefined` and `user-2` is kept).
 
-- [ ] **Step 3: Update the types**
+- [x] **Step 3: Update the types**
 
 In `src/shared/types.ts`, add after the `AudioChoice` line:
 
@@ -342,7 +342,7 @@ and add to `Settings` right after `fps: FpsChoice`:
   interpolate: InterpolateChoice
 ```
 
-- [ ] **Step 4: Update built-in presets**
+- [x] **Step 4: Update built-in presets**
 
 In `src/shared/presets.ts` replace the `base` line with:
 
@@ -350,7 +350,7 @@ In `src/shared/presets.ts` replace the `base` line with:
 const base = { res: 'best', fps: 'best', interpolate: 'off', bitrateKbps: null } as const
 ```
 
-- [ ] **Step 5: Accept and migrate the field in the store**
+- [x] **Step 5: Accept and migrate the field in the store**
 
 In `src/main/store/presetStore.ts` add below the `CODEC_VALUES` line:
 
@@ -370,7 +370,7 @@ In `loadStore`, replace `.map((p) => ({ ...p, builtIn: false }))` with:
         .map((p) => ({ ...p, builtIn: false, settings: { ...p.settings, interpolate: p.settings.interpolate ?? 'off' } }))
 ```
 
-- [ ] **Step 6: Fix every other Settings literal mechanically**
+- [x] **Step 6: Fix every other Settings literal mechanically**
 
 ```bash
 sed -i "s/bitrateKbps: null, encoder:/bitrateKbps: null, interpolate: 'off', encoder:/" src/shared/ffmpegArgs.test.ts src/shared/planner.test.ts src/shared/telemetry.test.ts src/main/encode/preview.test.ts src/main/encode/runEncode.test.ts tests/integration/encode.int.test.ts
@@ -380,7 +380,7 @@ git diff --stat
 
 Expected: the diff lists the 7 test files above plus the three source files. If `logic.test.ts` is not in the list, edit line 7 by hand so its `settings` object ends with `bitrateKbps: null, interpolate: 'off' }`.
 
-- [ ] **Step 7: Run typecheck and all tests**
+- [x] **Step 7: Run typecheck and all tests**
 
 Run: `npm run typecheck`
 Expected: no errors. If the compiler reports another `Settings` literal, add `interpolate: 'off'` the same way.
@@ -388,7 +388,7 @@ Expected: no errors. If the compiler reports another `Settings` literal, add `in
 Run: `npm test`
 Expected: all PASS, including the new store test.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/shared/types.ts src/shared/presets.ts src/main/store/presetStore.ts src/main/store/presetStore.test.ts src/shared/ffmpegArgs.test.ts src/shared/planner.test.ts src/shared/telemetry.test.ts src/main/encode/preview.test.ts src/main/encode/runEncode.test.ts src/renderer/src/state/logic.test.ts tests/integration/encode.int.test.ts
@@ -408,7 +408,7 @@ git commit -m "feat(smooth): add interpolate setting with preset migration"
 - Produces in `interpolation.ts`: `INTERP_TARGETS`, `disabledInterpolate(info): InterpolateChoice[]`, `interpTarget(choice): 60 | 120 | null`, `sourceFrameCount(info): number`, `interpolationDiskBytes(info, plan): number`, `overallFraction(phase, within): number`, `NO_VULKAN_MESSAGE`.
 - Consumes: `Settings.interpolate` from Task 2.
 
-- [ ] **Step 1: Write the failing helper tests**
+- [x] **Step 1: Write the failing helper tests**
 
 Create `src/shared/interpolation.test.ts`:
 
@@ -461,12 +461,12 @@ describe('interpolation helpers', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/shared/interpolation.test.ts`
 Expected: FAIL (module `./interpolation` not found).
 
-- [ ] **Step 3: Add the types**
+- [x] **Step 3: Add the types**
 
 In `src/shared/types.ts` append:
 
@@ -488,7 +488,7 @@ and add to `Plan` after `fpsExpr`:
   interpolation: Interpolation | null
 ```
 
-- [ ] **Step 4: Write the helpers**
+- [x] **Step 4: Write the helpers**
 
 Create `src/shared/interpolation.ts`:
 
@@ -530,7 +530,7 @@ export function overallFraction(phase: EncodePhase, within: number): number {
 }
 ```
 
-- [ ] **Step 5: Write the failing planner tests**
+- [x] **Step 5: Write the failing planner tests**
 
 In `src/shared/planner.test.ts` change the import line to add nothing new (it already imports `buildPlan`), then append this `describe` block at the end of the file:
 
@@ -570,12 +570,12 @@ describe('buildPlan: smooth motion', () => {
 })
 ```
 
-- [ ] **Step 6: Run to verify they fail**
+- [x] **Step 6: Run to verify they fail**
 
 Run: `npx vitest run src/shared/planner.test.ts src/shared/interpolation.test.ts`
 Expected: planner tests FAIL (`interpolation` undefined); interpolation tests may fail on `plan.interpolation`.
 
-- [ ] **Step 7: Implement in the planner**
+- [x] **Step 7: Implement in the planner**
 
 In `src/shared/planner.ts`:
 
@@ -613,7 +613,7 @@ with:
   })
 ```
 
-- [ ] **Step 8: Make the preview ignore interpolation**
+- [x] **Step 8: Make the preview ignore interpolation**
 
 In `src/main/encode/preview.ts` replace the `base` line in `encodeAfter`:
 
@@ -641,12 +641,12 @@ Add this test inside `describe('makePreview', ...)` in `src/main/encode/preview.
   })
 ```
 
-- [ ] **Step 9: Run typecheck and tests**
+- [x] **Step 9: Run typecheck and tests**
 
 Run: `npm run typecheck && npm test`
 Expected: all PASS. If a test file constructs a `Plan` literal and fails typecheck, add `interpolation: null` to it.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/shared/interpolation.ts src/shared/interpolation.test.ts src/shared/types.ts src/shared/planner.ts src/shared/planner.test.ts src/main/encode/preview.ts src/main/encode/preview.test.ts
@@ -664,7 +664,7 @@ git commit -m "feat(smooth): plan interpolation targets, disk estimate and progr
 - Consumes: `Plan.interpolation`, `Plan.width/height` from Task 3.
 - Produces: `buildFrameExportArgs(info, plan, o: { input: string; dir: string }): string[]` and `ArgsOptions.frames?: { dir: string; fps: number }` on `buildArgs`. Frames are read as `<dir>\%08d.png`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `src/shared/ffmpegArgs.test.ts` change the import to `import { buildArgs, buildFrameExportArgs, videoFilter } from './ffmpegArgs'` and append:
 
@@ -730,12 +730,12 @@ describe('frame pipeline args', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `npx vitest run src/shared/ffmpegArgs.test.ts`
 Expected: FAIL (`buildFrameExportArgs` is not exported).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `src/shared/ffmpegArgs.ts`:
 
@@ -787,12 +787,12 @@ export function buildFrameExportArgs(info: VideoInfo, plan: Plan, o: { input: st
 
 and delete the old `const withAudio = ...` line and the old duplicated lines that this block replaces (the `-ss`, `-i`, `-t`, `-map` lines and the old HDR tag line), so each appears exactly once.
 
-- [ ] **Step 4: Run tests and typecheck**
+- [x] **Step 4: Run tests and typecheck**
 
 Run: `npx vitest run src/shared/ffmpegArgs.test.ts && npm run typecheck`
 Expected: PASS (the old `buildArgs` tests stay green).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/ffmpegArgs.ts src/shared/ffmpegArgs.test.ts
@@ -811,7 +811,7 @@ git commit -m "feat(smooth): ffmpeg args for frame export and encode from frames
 **Interfaces:**
 - Produces: `RIFE_PACK`, `rifePackReady(pack?)`, `type RifePack`; `type RifeStatus = 'unavailable' | 'missing' | 'installed'` (in `types.ts`); `createInstaller(deps): Installer` with `status()`, `install({ onProgress, signal })`, `dir()`; `InstallError` with `kind: 'network' | 'hash' | 'extract' | 'disk' | 'aborted'`; `RIFE_EXE`, `RIFE_MODEL`; `extractZip(zip, dest)`.
 
-- [ ] **Step 1: Add the status type and the constants**
+- [x] **Step 1: Add the status type and the constants**
 
 Append to `src/shared/types.ts`:
 
@@ -840,7 +840,7 @@ export function rifePackReady(pack: RifePack = RIFE_PACK): boolean {
 }
 ```
 
-- [ ] **Step 2: Write the failing installer tests**
+- [x] **Step 2: Write the failing installer tests**
 
 Create `src/main/rife/installer.test.ts`:
 
@@ -923,12 +923,12 @@ describe('rife installer', () => {
 })
 ```
 
-- [ ] **Step 3: Run to verify they fail**
+- [x] **Step 3: Run to verify they fail**
 
 Run: `npx vitest run src/main/rife/installer.test.ts`
 Expected: FAIL (module `./installer` not found).
 
-- [ ] **Step 4: Implement the installer**
+- [x] **Step 4: Implement the installer**
 
 Create `src/main/rife/installer.ts`:
 
@@ -1058,12 +1058,12 @@ export function extractZip(zipFile: string, destDir: string): Promise<void> {
 }
 ```
 
-- [ ] **Step 5: Run tests and typecheck**
+- [x] **Step 5: Run tests and typecheck**
 
 Run: `npx vitest run src/main/rife/installer.test.ts && npm run typecheck`
 Expected: all 7 installer tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/shared/types.ts src/shared/rifePack.ts src/main/rife/installer.ts src/main/rife/installer.test.ts src/main/rife/extract.ts
@@ -1081,7 +1081,7 @@ git commit -m "feat(smooth): verified add-on installer"
 - Consumes: `Runner`, `RunOptions` from `../ffmpeg/runner`.
 - Produces: `rifeArgs(o): string[]`; `runRife(deps: RifeRunDeps, o: RifeRunOptions): Promise<RifeRunResult>` where `RifeRunDeps = { run: Runner; cwd: string; count(dir): Promise<number>; pollMs?: number }`, `RifeRunOptions = { inDir; outDir; frames; modelDir; signal?; onFrames?(n); onLog?(line) }`, `RifeRunResult = { ok: boolean; aborted: boolean; log: string }`; `probeVulkan(deps): Promise<{ ok: true } | { ok: false; log: string }>`.
 
-- [ ] **Step 1: Write the failing runner tests**
+- [x] **Step 1: Write the failing runner tests**
 
 Create `src/main/rife/runRife.test.ts`:
 
@@ -1127,12 +1127,12 @@ describe('runRife', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `npx vitest run src/main/rife/runRife.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement the runner**
+- [x] **Step 3: Implement the runner**
 
 Create `src/main/rife/runRife.ts`:
 
@@ -1176,7 +1176,7 @@ export async function runRife(deps: RifeRunDeps, o: RifeRunOptions): Promise<Rif
 }
 ```
 
-- [ ] **Step 4: Write the failing probe tests**
+- [x] **Step 4: Write the failing probe tests**
 
 Create `src/main/rife/gpu.test.ts`:
 
@@ -1218,12 +1218,12 @@ describe('probeVulkan', () => {
 })
 ```
 
-- [ ] **Step 5: Run to verify they fail**
+- [x] **Step 5: Run to verify they fail**
 
 Run: `npx vitest run src/main/rife/gpu.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 6: Implement the probe**
+- [x] **Step 6: Implement the probe**
 
 Create `src/main/rife/gpu.ts`:
 
@@ -1264,12 +1264,12 @@ export async function probeVulkan(d: GpuProbeDeps): Promise<GpuProbe> {
 }
 ```
 
-- [ ] **Step 7: Run tests and typecheck**
+- [x] **Step 7: Run tests and typecheck**
 
 Run: `npx vitest run src/main/rife && npm run typecheck`
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/main/rife/runRife.ts src/main/rife/runRife.test.ts src/main/rife/gpu.ts src/main/rife/gpu.test.ts
@@ -1288,7 +1288,7 @@ git commit -m "feat(smooth): rife runner and vulkan probe"
 - Consumes: `buildFrameExportArgs`, `buildArgs(..., { frames })` (Task 4); `interpolationDiskBytes`, `overallFraction` (Task 3); `runRife` (Task 6).
 - Produces: `EncodeErrorKind = 'aborted' | 'disk' | 'ffmpeg' | 'size' | 'smooth' | 'addon'` (in `types.ts`); `EncodeProgress.phase: EncodePhase`; `InterpolateDeps`; `prepareFrames(req, deps, on, signal): Promise<Frames>` with `Frames = { dir: string; fps: number; cleanup(): Promise<void> }`; `EncodeDeps.interpolate?: InterpolateDeps` and `EncodeDeps.now?: () => number`.
 
-- [ ] **Step 1: Types and error module**
+- [x] **Step 1: Types and error module**
 
 In `src/shared/types.ts` add:
 
@@ -1330,7 +1330,7 @@ export class EncodeError extends Error {
 export const DISK_FULL = /No space left on device|There is not enough space on the disk/i
 ```
 
-- [ ] **Step 2: Write the failing telemetry test**
+- [x] **Step 2: Write the failing telemetry test**
 
 In `src/shared/telemetry.test.ts` make sure `encodeEvent` is imported from `./telemetry`, then add inside an existing `describe` (or a new one at the end):
 
@@ -1351,7 +1351,7 @@ describe('encodeEvent: smooth motion failures', () => {
 Run: `npx vitest run src/shared/telemetry.test.ts`
 Expected: PASS after the change in Step 1 (it fails before it with a type error / `smooth`).
 
-- [ ] **Step 3: Write the failing stage tests**
+- [x] **Step 3: Write the failing stage tests**
 
 Create `src/main/encode/interpolate.test.ts`:
 
@@ -1453,12 +1453,12 @@ describe('prepareFrames', () => {
 })
 ```
 
-- [ ] **Step 4: Run to verify they fail**
+- [x] **Step 4: Run to verify they fail**
 
 Run: `npx vitest run src/main/encode/interpolate.test.ts`
 Expected: FAIL (module `./interpolate` not found).
 
-- [ ] **Step 5: Implement the stage**
+- [x] **Step 5: Implement the stage**
 
 Create `src/main/encode/interpolate.ts`:
 
@@ -1553,12 +1553,12 @@ export async function prepareFrames(
 }
 ```
 
-- [ ] **Step 6: Run the stage tests**
+- [x] **Step 6: Run the stage tests**
 
 Run: `npx vitest run src/main/encode/interpolate.test.ts`
 Expected: all 7 PASS.
 
-- [ ] **Step 7: Write the failing runEncode tests**
+- [x] **Step 7: Write the failing runEncode tests**
 
 In `src/main/encode/runEncode.test.ts` add the import `import type { InterpolateDeps } from './interpolate'` and append at the end of the file:
 
@@ -1627,12 +1627,12 @@ describe('runEncode with smooth motion', () => {
 })
 ```
 
-- [ ] **Step 8: Run to verify they fail**
+- [x] **Step 8: Run to verify they fail**
 
 Run: `npx vitest run src/main/encode/runEncode.test.ts`
 Expected: new tests FAIL (no frames stage yet); old tests still PASS.
 
-- [ ] **Step 9: Rewrite `runEncode.ts`**
+- [x] **Step 9: Rewrite `runEncode.ts`**
 
 Replace the whole file `src/main/encode/runEncode.ts` with:
 
@@ -1763,12 +1763,12 @@ export async function runEncode(
 }
 ```
 
-- [ ] **Step 10: Run all tests and typecheck**
+- [x] **Step 10: Run all tests and typecheck**
 
 Run: `npm run typecheck && npm test`
 Expected: all PASS, including the 9 old `runEncode` tests. If `ipc.ts` fails typecheck because `EncodeError` moved, confirm it still imports `EncodeError` from `./encode/runEncode` (re-exported).
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add src/main/encode/errors.ts src/main/encode/interpolate.ts src/main/encode/interpolate.test.ts src/main/encode/runEncode.ts src/main/encode/runEncode.test.ts src/shared/types.ts src/shared/api.ts src/shared/telemetry.ts src/shared/telemetry.test.ts
@@ -1788,7 +1788,7 @@ git commit -m "feat(smooth): frame preparation stage and phased encode progress"
 
 There is no unit test for this wiring (it needs Electron). It is verified by `npm run typecheck`, the integration test in Task 11 and the manual smoke test in Task 12.
 
-- [ ] **Step 1: Extend the API types**
+- [x] **Step 1: Extend the API types**
 
 In `src/shared/api.ts` change the import on line 1 to also import `RifeStatus`, then add above `export interface SquishApi`:
 
@@ -1811,7 +1811,7 @@ and add inside `SquishApi` after `onLog`:
   }
 ```
 
-- [ ] **Step 2: Preload**
+- [x] **Step 2: Preload**
 
 In `src/preload/index.ts` add after `onLog: on('encode:log'),`:
 
@@ -1824,7 +1824,7 @@ In `src/preload/index.ts` add after `onLog: on('encode:log'),`:
   },
 ```
 
-- [ ] **Step 3: Env**
+- [x] **Step 3: Env**
 
 In `src/main/index.ts` add to the `env` object:
 
@@ -1832,7 +1832,7 @@ In `src/main/index.ts` add to the `env` object:
   rifeDir: join(app.getPath('userData'), 'rife'),
 ```
 
-- [ ] **Step 4: IPC**
+- [x] **Step 4: IPC**
 
 In `src/main/ipc.ts`:
 
@@ -1926,12 +1926,12 @@ import { createInstaller, InstallError, RIFE_EXE, RIFE_MODEL } from './rife/inst
 
 6. In `shutdown()` add `installJob?.abort()` as the first line after `job?.abort()`.
 
-- [ ] **Step 5: Typecheck and tests**
+- [x] **Step 5: Typecheck and tests**
 
 Run: `npm run typecheck && npm test`
 Expected: no errors, all tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/shared/api.ts src/main/ipc.ts src/main/index.ts src/preload/index.ts
@@ -1949,7 +1949,7 @@ git commit -m "feat(smooth): wire add-on install, gpu check and pipeline into th
 - Consumes: `RifeState`, `RifeInstallOutcome` (Task 8), `Plan.interpolation`, `EncodeProgress.phase`.
 - Produces in `logic.ts`: `addonQuestion(sizeBytes)`, `downloadLabel(done, total)`, `smoothHint(needBytes)`, `smoothDone(plan, info): string | null`, `phaseLabel(progress): string`. In the store: `rife: RifeState | null`, `addon: AddonState`, `notice: string | null`, `refreshRife()`, `confirmAddon()`, `cancelAddon()`, and a gated `startEncode()`.
 
-- [ ] **Step 1: Write the failing helper tests**
+- [x] **Step 1: Write the failing helper tests**
 
 In `src/renderer/src/state/logic.test.ts` change the first import to also bring in the new helpers and add the types:
 
@@ -1989,7 +1989,7 @@ and append inside the `describe('logic', ...)` block:
 Run: `npx vitest run src/renderer/src/state/logic.test.ts`
 Expected: FAIL (helpers not exported).
 
-- [ ] **Step 2: Implement the helpers**
+- [x] **Step 2: Implement the helpers**
 
 In `src/renderer/src/state/logic.ts` change the imports and append:
 
@@ -2028,7 +2028,7 @@ export function phaseLabel(p: EncodeProgress | null): string {
 Run: `npx vitest run src/renderer/src/state/logic.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Extend the store**
+- [x] **Step 3: Extend the store**
 
 In `src/renderer/src/state/store.ts`:
 
@@ -2114,12 +2114,12 @@ and replace the old `async startEncode() {...}` with:
 7. Add `import { NO_VULKAN_MESSAGE } from '@shared/interpolation'`.
 8. In `reset()` add `notice: null` to the object.
 
-- [ ] **Step 4: Typecheck and tests**
+- [x] **Step 4: Typecheck and tests**
 
 Run: `npm run typecheck && npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/state/logic.ts src/renderer/src/state/logic.test.ts src/renderer/src/state/store.ts
@@ -2138,7 +2138,7 @@ git commit -m "feat(smooth): renderer state and copy for the add-on flow"
 - Consumes: store fields and helpers from Task 9, `disabledInterpolate`, `interpolationDiskBytes`, `NO_VULKAN_MESSAGE` from `@shared/interpolation`.
 - Produces: the visible feature. No unit tests (UI); verified by typecheck here and by the manual smoke test in Task 12.
 
-- [ ] **Step 1: Settings row**
+- [x] **Step 1: Settings row**
 
 In `src/renderer/src/screens/SettingsScreen.tsx`:
 
@@ -2178,7 +2178,7 @@ import { allPresets, nextPresetName, smoothHint } from '../state/logic'
           )}
 ```
 
-- [ ] **Step 2: Add-on dialog**
+- [x] **Step 2: Add-on dialog**
 
 Create `src/renderer/src/components/AddonDialog.tsx`:
 
@@ -2250,7 +2250,7 @@ export function AddonDialog() {
 
 In `src/renderer/src/App.tsx` add `import { AddonDialog } from './components/AddonDialog'` and render `<AddonDialog />` right after `<AboutDialog ... />`.
 
-- [ ] **Step 3: Progress screen**
+- [x] **Step 3: Progress screen**
 
 In `src/renderer/src/screens/EncodingScreen.tsx`:
 
@@ -2273,7 +2273,7 @@ In `src/renderer/src/screens/EncodingScreen.tsx`:
           {notice && <div role="status" className="mono" style={{ fontSize: 13, color: 'var(--ink-3)' }}>{notice}</div>}
 ```
 
-- [ ] **Step 4: Compare, Done, About**
+- [x] **Step 4: Compare, Done, About**
 
 In `src/renderer/src/screens/CompareScreen.tsx` replace the bottom button row opening line
 
@@ -2311,12 +2311,12 @@ with the same text followed by a second paragraph:
             </p>
 ```
 
-- [ ] **Step 5: Typecheck, tests, build**
+- [x] **Step 5: Typecheck, tests, build**
 
 Run: `npm run typecheck && npm test && npm run build`
 Expected: all PASS, build succeeds.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/renderer/src/components/AddonDialog.tsx src/renderer/src/screens/SettingsScreen.tsx src/renderer/src/screens/EncodingScreen.tsx src/renderer/src/screens/CompareScreen.tsx src/renderer/src/screens/DoneScreen.tsx src/renderer/src/components/AboutDialog.tsx src/renderer/src/App.tsx
@@ -2334,7 +2334,7 @@ git commit -m "feat(smooth): settings row, add-on dialog and progress messages"
 - Consumes: `resources\rife-pack\rife-pack-1.zip` (Task 1), `resources\bin\ffmpeg.exe`, `extractZip` (Task 5), `probeVulkan` (Task 6), `runEncode` with `interpolate` deps (Task 7).
 - Skips automatically when the pack, ffmpeg or a Vulkan GPU is missing.
 
-- [ ] **Step 1: Write the integration test**
+- [x] **Step 1: Write the integration test**
 
 Create `tests/integration/interpolate.int.test.ts`:
 
@@ -2447,17 +2447,17 @@ describe.skipIf(!has)('smooth motion integration', () => {
 })
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npm run test:int -- interpolate`
 Expected: PASS (4 tests) on a machine with a Vulkan GPU. Without Vulkan the tests are skipped and the run still exits 0; in that case say so in the report instead of claiming success. Do not call this task done unless the tests actually ran.
 
-- [ ] **Step 3: Run the whole suite**
+- [x] **Step 3: Run the whole suite**
 
 Run: `npm run typecheck && npm test`
 Expected: PASS (the integration file is excluded from nothing: `npm test` includes `tests/**`; with a Vulkan GPU it takes longer, up to a few minutes).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/integration/interpolate.int.test.ts
@@ -2477,12 +2477,12 @@ git commit -m "test(smooth): integration test with real RIFE, odd paths and colo
 
 This task includes an outward-facing action (uploading a release asset). **Ask the user before running the `gh` command in Step 2.**
 
-- [ ] **Step 1: Confirm the zip is unchanged**
+- [x] **Step 1: Confirm the zip is unchanged**
 
 Run: `node -e "const c=require('node:crypto'),f=require('node:fs');const h=c.createHash('sha256').update(f.readFileSync('resources/rife-pack/rife-pack-1.zip')).digest('hex');console.log(h, f.statSync('resources/rife-pack/rife-pack-1.zip').size)"`
 Expected: the same hash and size that Task 1 Step 4 printed. If they differ, use the new values everywhere below (never mix values from two builds).
 
-- [ ] **Step 2: Upload the asset (ask the user first)**
+- [x] **Step 2: Upload the asset (ask the user first)**
 
 With the user's OK:
 
@@ -2492,16 +2492,16 @@ gh release create rife-pack-1 resources/rife-pack/rife-pack-1.zip --repo leg1tfx
 
 Expected: a release with one asset named `rife-pack-1.zip`. Then verify the public URL answers: `curl -sIL https://github.com/leg1tfx/Squish/releases/download/rife-pack-1/rife-pack-1.zip | head -n 1` should show `HTTP/1.1 302` or `200`. If the repository is private, stop: the app cannot download from it without credentials; ask the user where to host the file instead and change `url` accordingly.
 
-- [ ] **Step 3: Fill in the constants**
+- [x] **Step 3: Fill in the constants**
 
 In `src/shared/rifePack.ts` set `sha256` and `sizeBytes` to the values from Step 1 (exact digits, 64 lowercase hex characters).
 
-- [ ] **Step 4: Verify the pinned hash matches the hosted file**
+- [x] **Step 4: Verify the pinned hash matches the hosted file**
 
 Run: `node -e "const c=require('node:crypto');fetch('https://github.com/leg1tfx/Squish/releases/download/rife-pack-1/rife-pack-1.zip').then(r=>r.arrayBuffer()).then(b=>console.log(c.createHash('sha256').update(Buffer.from(b)).digest('hex'), b.byteLength))"`
 Expected: the same hash and size as in `rifePack.ts`.
 
-- [ ] **Step 5: Full verification**
+- [x] **Step 5: Full verification**
 
 Run: `npm run typecheck && npm test && npm run build`
 Expected: all PASS.
@@ -2517,7 +2517,7 @@ Run `npm run dev`, then:
 6. Compare screen with 120 selected shows "Preview shows the original frame rate."
 7. Turn the network off, delete `userData\rife`, restart and try Download: the error says "Could not download the add-on. Check your connection and try again." and Try again works once the network is back.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/shared/rifePack.ts

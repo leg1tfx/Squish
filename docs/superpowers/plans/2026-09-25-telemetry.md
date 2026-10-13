@@ -52,7 +52,7 @@
   - `isRendererEvent(name: unknown): name is RendererEventName`
   - `encodeEvent(input: EncodeEventInput): TelemetryEvent`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/shared/telemetry.test.ts`:
 
@@ -148,12 +148,12 @@ describe('encodeEvent', () => {
 })
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/shared/telemetry.test.ts`
 Expected: FAIL, cannot resolve `./telemetry`.
 
-- [ ] **Step 3: Add `EncodeMeta` to `src/shared/api.ts`**
+- [x] **Step 3: Add `EncodeMeta` to `src/shared/api.ts`**
 
 Add below the `EncodeOutcome` type:
 
@@ -162,7 +162,7 @@ Add below the `EncodeOutcome` type:
 export interface EncodeMeta { presetId: string; edited: boolean }
 ```
 
-- [ ] **Step 4: Implement `src/shared/telemetry.ts`**
+- [x] **Step 4: Implement `src/shared/telemetry.ts`**
 
 ```ts
 import type { EncodeMeta, EncodeOutcome } from './api'
@@ -253,7 +253,7 @@ export function encodeEvent({ outcome, info, settings, meta, encoders, lastFract
 }
 ```
 
-- [ ] **Step 5: Use `VIDEO_EXTENSIONS` in the file dialog**
+- [x] **Step 5: Use `VIDEO_EXTENSIONS` in the file dialog**
 
 In `src/main/ipc.ts`, add `import { VIDEO_EXTENSIONS } from '@shared/telemetry'` and replace the inline extension array in the `file:open` handler:
 
@@ -261,12 +261,12 @@ In `src/main/ipc.ts`, add `import { VIDEO_EXTENSIONS } from '@shared/telemetry'`
 const r = await dialog.showOpenDialog(w!, { properties: ['openFile'], filters: [{ name: 'Video', extensions: [...VIDEO_EXTENSIONS] }] })
 ```
 
-- [ ] **Step 6: Run the tests and typecheck**
+- [x] **Step 6: Run the tests and typecheck**
 
 Run: `npx vitest run src/shared/telemetry.test.ts` → Expected: PASS (all tests).
 Run: `npm run typecheck` → Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/shared/telemetry.ts src/shared/telemetry.test.ts src/shared/api.ts src/main/ipc.ts
@@ -292,7 +292,7 @@ git commit -m "feat: telemetry event allowlist and bucket helpers"
   - `createTelemetry(deps: { appKey: string; system: SystemInfo; isEnabled: () => Promise<boolean>; fetch: FetchLike; now?: () => number; random?: () => number }): Telemetry`
   - `endpointFor(appKey: string): string | null`, `newSessionId(nowMs: number, random: number): string`, `SDK_VERSION`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/main/telemetry.test.ts`:
 
@@ -389,12 +389,12 @@ describe('track', () => {
 })
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/main/telemetry.test.ts`
 Expected: FAIL, cannot resolve `./telemetry`.
 
-- [ ] **Step 3: Implement `src/main/telemetry.ts`**
+- [x] **Step 3: Implement `src/main/telemetry.ts`**
 
 ```ts
 import type { TelemetryEvent } from '@shared/telemetry'
@@ -467,19 +467,19 @@ export function createTelemetry(deps: TelemetryDeps): Telemetry {
 }
 ```
 
-- [ ] **Step 4: Add the app key to `src/shared/links.ts`**
+- [x] **Step 4: Add the app key to `src/shared/links.ts`**
 
 ```ts
 /** Aptabase (EU) app key. Public by design: it only allows sending events, not reading them. */
 export const APTABASE_APP_KEY = 'A-EU-6956588791'
 ```
 
-- [ ] **Step 5: Run the tests and typecheck**
+- [x] **Step 5: Run the tests and typecheck**
 
 Run: `npx vitest run src/main/telemetry.test.ts` → Expected: PASS.
 Run: `npm run typecheck` → Expected: no errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/main/telemetry.ts src/main/telemetry.test.ts src/shared/links.ts
@@ -505,7 +505,7 @@ git commit -m "feat: minimal Aptabase client with per-event consent check"
   - `window.squish.store.setTelemetry(on: boolean): Promise<StoreData>`: sets `telemetry` and also `telemetryNoticeSeen = true`
   - `window.squish.store.telemetryNoticeSeen(): Promise<StoreData>`: sets only `telemetryNoticeSeen = true`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append inside the `describe('presetStore', ...)` block in `src/main/store/presetStore.test.ts`:
 
@@ -530,12 +530,12 @@ Append inside the `describe('presetStore', ...)` block in `src/main/store/preset
   })
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/main/store/presetStore.test.ts`
 Expected: FAIL on the two new tests (`telemetry` is undefined).
 
-- [ ] **Step 3: Extend `StoreData` in `src/shared/types.ts`**
+- [x] **Step 3: Extend `StoreData` in `src/shared/types.ts`**
 
 ```ts
 export interface StoreData {
@@ -550,7 +550,7 @@ export interface StoreData {
 }
 ```
 
-- [ ] **Step 4: Update `defaultStore` and `loadStore` in `src/main/store/presetStore.ts`**
+- [x] **Step 4: Update `defaultStore` and `loadStore` in `src/main/store/presetStore.ts`**
 
 ```ts
 export function defaultStore(): StoreData {
@@ -567,7 +567,7 @@ In `loadStore`, add two fields to the returned object after `promoDismissed`:
       telemetryNoticeSeen: d.telemetryNoticeSeen === true
 ```
 
-- [ ] **Step 5: Fix the store literal in `src/renderer/src/state/logic.test.ts`**
+- [x] **Step 5: Fix the store literal in `src/renderer/src/state/logic.test.ts`**
 
 ```ts
 const store: StoreData = {
@@ -576,7 +576,7 @@ const store: StoreData = {
 }
 ```
 
-- [ ] **Step 6: Add the store IPC handlers in `src/main/ipc.ts`**
+- [x] **Step 6: Add the store IPC handlers in `src/main/ipc.ts`**
 
 Below the `store:dismissPromo` handler:
 
@@ -586,7 +586,7 @@ Below the `store:dismissPromo` handler:
   ipcMain.handle('store:telemetryNoticeSeen', async () => setStore({ ...(await getStore()), telemetryNoticeSeen: true }))
 ```
 
-- [ ] **Step 7: Expose them in `src/shared/api.ts` and `src/preload/index.ts`**
+- [x] **Step 7: Expose them in `src/shared/api.ts` and `src/preload/index.ts`**
 
 In `SquishApi.store` (`src/shared/api.ts`):
 
@@ -604,12 +604,12 @@ In the `store` object in `src/preload/index.ts`:
     telemetryNoticeSeen: () => ipcRenderer.invoke('store:telemetryNoticeSeen')
 ```
 
-- [ ] **Step 8: Run all tests and typecheck**
+- [x] **Step 8: Run all tests and typecheck**
 
 Run: `npm test` → Expected: PASS (all files).
 Run: `npm run typecheck` → Expected: no errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/shared/types.ts src/main/store/presetStore.ts src/main/store/presetStore.test.ts src/renderer/src/state/logic.test.ts src/main/ipc.ts src/shared/api.ts src/preload/index.ts
@@ -633,7 +633,7 @@ git commit -m "feat: store stats consent with opt-out default"
   - `window.squish.encode(settings: Settings, meta: EncodeMeta): Promise<EncodeOutcome>`
   - `window.squish.track(name: RendererEventName): void`
 
-- [ ] **Step 1: Change the API types in `src/shared/api.ts`**
+- [x] **Step 1: Change the API types in `src/shared/api.ts`**
 
 Update the import line and two members of `SquishApi`:
 
@@ -650,7 +650,7 @@ import type { RendererEventName } from './telemetry'
   track(name: RendererEventName): void
 ```
 
-- [ ] **Step 2: Update `src/preload/index.ts`**
+- [x] **Step 2: Update `src/preload/index.ts`**
 
 ```ts
   encode: (s, meta) => ipcRenderer.invoke('encode', s, meta),
@@ -662,7 +662,7 @@ and after `openFfmpegSource`:
   track: (name) => ipcRenderer.send('telemetry:track', name),
 ```
 
-- [ ] **Step 3: Pass the meta from the renderer store (`src/renderer/src/state/store.ts`)**
+- [x] **Step 3: Pass the meta from the renderer store (`src/renderer/src/state/store.ts`)**
 
 In `startEncode`:
 
@@ -673,7 +673,7 @@ In `startEncode`:
 
 (replacing `const r = await api().encode(get().settings)`).
 
-- [ ] **Step 4: Wire telemetry into `src/main/ipc.ts`**
+- [x] **Step 4: Wire telemetry into `src/main/ipc.ts`**
 
 Imports:
 
@@ -760,7 +760,7 @@ Below the store handlers:
 
 Note: the two early returns ("already running", "No video loaded") intentionally send nothing; no encode ran.
 
-- [ ] **Step 5: Build the client in `src/main/index.ts`**
+- [x] **Step 5: Build the client in `src/main/index.ts`**
 
 Imports:
 
@@ -789,16 +789,16 @@ Replace `const ipc = registerIpc(env, () => win)` inside `app.whenReady().then(.
   }))
 ```
 
-- [ ] **Step 6: Run all tests and typecheck**
+- [x] **Step 6: Run all tests and typecheck**
 
 Run: `npm test` → Expected: PASS.
 Run: `npm run typecheck` → Expected: no errors.
 
-- [ ] **Step 7: Smoke-run the app**
+- [x] **Step 7: Smoke-run the app**
 
 Run: `npm run dev`. Drop a video, encode with the Discord preset, cancel one encode, drop a `.txt` file renamed to `.mp4`. Expected: every flow behaves exactly as before, and no errors appear in the terminal. Then disconnect the network (or block the app in the firewall) and encode once more. Expected: encode and quit work normally, with no delay.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/main/index.ts src/main/ipc.ts src/shared/api.ts src/preload/index.ts src/renderer/src/state/store.ts
@@ -821,7 +821,7 @@ git commit -m "feat: send anonymous start, encode, probe and promo events"
 - Consumes: `window.squish.store.setTelemetry`, `window.squish.store.telemetryNoticeSeen` (Task 3), `window.squish.track` (Task 4), `StoreData.telemetry`, `StoreData.telemetryNoticeSeen` (Task 3).
 - Produces: store actions `setTelemetry(on: boolean): Promise<void>` and `acknowledgeTelemetryNotice(): Promise<void>`.
 
-- [ ] **Step 1: Add store actions (`src/renderer/src/state/store.ts`)**
+- [x] **Step 1: Add store actions (`src/renderer/src/state/store.ts`)**
 
 In the `State` interface, after `dismissPromo(): Promise<void>`:
 
@@ -838,7 +838,7 @@ In the returned object, after `dismissPromo`:
     async acknowledgeTelemetryNotice() { set({ data: await api().store.telemetryNoticeSeen() }) }
 ```
 
-- [ ] **Step 2: Create `src/renderer/src/components/TelemetryNotice.tsx`**
+- [x] **Step 2: Create `src/renderer/src/components/TelemetryNotice.tsx`**
 
 ```tsx
 import { AnimatePresence, motion } from 'motion/react'
@@ -885,7 +885,7 @@ export function TelemetryNotice() {
 }
 ```
 
-- [ ] **Step 3: Show it on the Drop screen (`src/renderer/src/screens/DropScreen.tsx`)**
+- [x] **Step 3: Show it on the Drop screen (`src/renderer/src/screens/DropScreen.tsx`)**
 
 Imports:
 
@@ -911,7 +911,7 @@ Change the outer wrapper to a column so the card sits **below** the drop zone (n
     </div>
 ```
 
-- [ ] **Step 4: Add the switch to the About dialog (`src/renderer/src/components/AboutDialog.tsx`)**
+- [x] **Step 4: Add the switch to the About dialog (`src/renderer/src/components/AboutDialog.tsx`)**
 
 Imports:
 
@@ -942,7 +942,7 @@ Insert between the FFmpeg paragraph and the button row:
 
 The dialog is a modal separate from the Drop screen, so the gold switch does not compete with the "Choose file" button.
 
-- [ ] **Step 5: Promo events on the Done screen (`src/renderer/src/screens/DoneScreen.tsx`)**
+- [x] **Step 5: Promo events on the Done screen (`src/renderer/src/screens/DoneScreen.tsx`)**
 
 After the existing count-up `useEffect` (before the `if (!result || !info)` early return):
 
@@ -962,20 +962,20 @@ Replace `{data && !data.promoDismissed && (` with `{showPromo && (`, and the two
 onClick={() => { window.squish.track('promo_dismissed'); void dismissPromo() }}
 ```
 
-- [ ] **Step 6: Update the docs**
+- [x] **Step 6: Update the docs**
 
 In `docs/release-checklist.md`, add after the `PROMO_URL` line:
 
 ```markdown
-- [ ] `APTABASE_APP_KEY` in `src/shared/links.ts` is the Pyno's Squish key. A packaged build shows up in the Aptabase dashboard under release data (not Debug).
-- [ ] The Payhip product page says the app sends anonymous usage and error stats, and that they can be turned off in About.
+- [x] `APTABASE_APP_KEY` in `src/shared/links.ts` is the Pyno's Squish key. A packaged build shows up in the Aptabase dashboard under release data (not Debug).
+- [x] The Payhip product page says the app sends anonymous usage and error stats, and that they can be turned off in About.
 ```
 
 Add under "Manual checks before first release":
 
 ```markdown
-- [ ] Fresh install: the stats notice shows under the drop zone. "Got it" hides it for good (restart to check). "Turn off" hides it and the About switch shows off.
-- [ ] About switch toggles with mouse, Tab + Space, and a screen reader announces it as a switch.
+- [x] Fresh install: the stats notice shows under the drop zone. "Got it" hides it for good (restart to check). "Turn off" hides it and the About switch shows off.
+- [x] About switch toggles with mouse, Tab + Space, and a screen reader announces it as a switch.
 ```
 
 In `docs/superpowers/specs/2026-09-24-squish-design.md`, change the two table rows in section 2:
@@ -988,7 +988,7 @@ In `docs/superpowers/specs/2026-09-24-squish-design.md`, change the two table ro
 
 (replacing the `Netzwerk` row and the `Konto, Lizenz, Telemetrie` row).
 
-- [ ] **Step 7: Run all tests, typecheck and check the UI**
+- [x] **Step 7: Run all tests, typecheck and check the UI**
 
 Run: `npm test` → Expected: PASS.
 Run: `npm run typecheck` → Expected: no errors.
@@ -999,7 +999,7 @@ Run: `npm run dev` and check:
 - Encode to the Done screen. The promo still shows, "See them →" opens the browser, × hides it.
 - Windows reduced motion on: the card only fades.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/renderer/src/components/TelemetryNotice.tsx src/renderer/src/state/store.ts src/renderer/src/screens/DropScreen.tsx src/renderer/src/components/AboutDialog.tsx src/renderer/src/screens/DoneScreen.tsx docs/release-checklist.md docs/superpowers/specs/2026-09-24-squish-design.md

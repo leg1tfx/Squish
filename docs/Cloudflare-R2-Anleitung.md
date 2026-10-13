@@ -9,7 +9,7 @@ Diese Anleitung machst du **nur einmal**. Danach veröffentlichst du jedes Updat
 
 ## Worum geht es?
 
-Die Squish-App deiner Kunden schaut bei jedem Start unter dieser Adresse nach, ob es eine neue Version gibt:
+Die Squish-App deiner Kunden schaut beim Start (höchstens einmal im Monat) unter dieser Adresse nach, ob es eine neue Version gibt:
 
 ```
 https://updates.pynos-ae-suite.de/squish/latest.yml
@@ -110,7 +110,7 @@ Die Schlüssel werden nur auf deinem PC in der Datei `.release-secrets.json` ges
 3. **Schritt 2:** **Installer bauen** und warten, bis „fertig ✓“ erscheint.
 4. **Schritt 3:** **Jetzt veröffentlichen**.
 
-Oben bei **Bei den Kunden** steht danach die neue Nummer. Die Apps deiner Kunden laden das Update beim nächsten Start im Hintergrund. Danach erscheint bei ihnen oben „Update ready · Restart“.
+Oben bei **Bei den Kunden** steht danach die neue Nummer. Die Apps deiner Kunden laden das Update beim nächsten Monats-Check im Hintergrund. Danach erscheint bei ihnen oben „Update ready · Restart“.
 
 **Einmal selbst testen:** Installier eine ältere Version auf deinem PC, veröffentliche eine neuere und starte die alte. Nach ein paar Sekunden sollte oben „Update ready · Restart“ erscheinen.
 

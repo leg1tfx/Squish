@@ -1,6 +1,8 @@
 import type { UpdateStatus } from '@shared/api'
 
-export const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
+export const CHECK_GAP_MS = 30 * 24 * 60 * 60 * 1000
+
+export interface CheckClock { last(): number; mark(t: number): void; now(): number }
 
 export interface UpdaterLike {
   autoDownload: boolean
@@ -12,11 +14,12 @@ export interface UpdaterLike {
   quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 }
 
-export interface UpdaterHandle { status(): UpdateStatus; install(): void; dispose(): void }
+export interface UpdaterHandle { status(): UpdateStatus; install(): void }
 
-// Downloads new versions in the background. The update installs on the next quit,
-// or right away when the user clicks "Restart". Errors (offline, no release yet) stay silent.
-export function startUpdater(u: UpdaterLike, send: (s: UpdateStatus) => void, intervalMs = CHECK_INTERVAL_MS): UpdaterHandle {
+// Looks for a new version at start, at most once per CHECK_GAP_MS (keeps R2 operations near zero).
+// The update downloads in the background and installs on the next quit, or right away on "Restart".
+// Errors (offline, no release yet) stay silent and do not count as a check, so the next start retries.
+export function startUpdater(u: UpdaterLike, send: (s: UpdateStatus) => void, clock: CheckClock): UpdaterHandle {
   let status: UpdateStatus = { state: 'none' }
   const set = (s: UpdateStatus): void => { status = s; send(s) }
   u.autoDownload = true
@@ -25,12 +28,12 @@ export function startUpdater(u: UpdaterLike, send: (s: UpdateStatus) => void, in
   u.on('download-progress', (p) => { if (status.state === 'downloading') set({ ...status, percent: Math.round(p.percent) }) })
   u.on('update-downloaded', (i) => set({ state: 'ready', version: i.version }))
   u.on('error', () => { if (status.state === 'downloading') set({ state: 'none' }) })
-  const check = (): void => { if (status.state === 'none') u.checkForUpdates().catch(() => {}) }
-  check()
-  const timer = setInterval(check, intervalMs)
+  if (clock.now() - clock.last() >= CHECK_GAP_MS) {
+    const t = clock.now()
+    u.checkForUpdates().then(() => clock.mark(t)).catch(() => {})
+  }
   return {
     status: () => status,
-    install: () => { if (status.state === 'ready') u.quitAndInstall(true, true) },
-    dispose: () => clearInterval(timer)
+    install: () => { if (status.state === 'ready') u.quitAndInstall(true, true) }
   }
 }

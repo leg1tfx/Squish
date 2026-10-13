@@ -87,7 +87,7 @@ promo/
   - `function snapToBeat(t: number, music: MusicConfig): number`, gibt den nächsten Beat zurück
   - `const MUSIC: MusicConfig` in `music.ts`
 
-- [ ] **Step 1: Gerüst anlegen**
+- [x] **Step 1: Gerüst anlegen**
 
 `promo/package.json`:
 
@@ -191,7 +191,7 @@ export const MUSIC: MusicConfig = {
 Run: `cd promo && npm install`
 Expected: Installiert ohne Fehler.
 
-- [ ] **Step 2: Failing Tests für `buildTimeline` schreiben**
+- [x] **Step 2: Failing Tests für `buildTimeline` schreiben**
 
 `promo/src/timeline.test.ts`:
 
@@ -308,12 +308,12 @@ describe('buildTimeline', () => {
 })
 ```
 
-- [ ] **Step 3: Tests laufen lassen, sie müssen fehlschlagen**
+- [x] **Step 3: Tests laufen lassen, sie müssen fehlschlagen**
 
 Run: `cd promo && npx vitest run src/timeline.test.ts`
 Expected: FAIL mit „Failed to resolve import ./timeline“.
 
-- [ ] **Step 4: `timeline.ts` implementieren**
+- [x] **Step 4: `timeline.ts` implementieren**
 
 `promo/src/timeline.ts`:
 
@@ -400,12 +400,12 @@ export function buildTimeline(words: Word[], music: MusicConfig, fps: number): T
 }
 ```
 
-- [ ] **Step 5: Tests laufen lassen, sie müssen grün sein**
+- [x] **Step 5: Tests laufen lassen, sie müssen grün sein**
 
 Run: `cd promo && npx vitest run src/timeline.test.ts`
 Expected: PASS, 12 Tests.
 
-- [ ] **Step 6: Platzhalter-`words.json` anlegen**
+- [x] **Step 6: Platzhalter-`words.json` anlegen**
 
 `promo/src/words.json` enthält handgeschätzte Zeiten nach Storyboard und wird in Task 3 überschrieben:
 
@@ -446,7 +446,7 @@ Expected: PASS, 12 Tests.
 ]
 ```
 
-- [ ] **Step 7: Typecheck und Commit**
+- [x] **Step 7: Typecheck und Commit**
 
 Run: `cd promo && npm run typecheck && npm test`
 Expected: keine Fehler, Tests grün.
@@ -473,7 +473,7 @@ git commit -m "feat(promo): remotion scaffold and beat-snapped timeline"
   - `align(tokens: list[Token], heard: list[tuple[str, float, float]]) -> list[dict]`, Dicts mit `word, start, end, scene` im `words.json`-Format aus Task 1
   - `AlignmentError(Exception)`
 
-- [ ] **Step 1: Python-Umgebung**
+- [x] **Step 1: Python-Umgebung**
 
 `promo/requirements.txt`:
 
@@ -488,7 +488,7 @@ pytest>=8
 Run: `cd promo && py -3.12 -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt`
 Expected: Installation erfolgreich. kokoro zieht torch (CPU) und misaki mit.
 
-- [ ] **Step 2: `script.txt` anlegen**
+- [x] **Step 2: `script.txt` anlegen**
 
 Syntax: `[szene]` startet eine Szene. `{Anzeige|Gesprochen}` ist ein Token, das im Video als „Anzeige“ erscheint und als „Gesprochen“ an die TTS geht. Alle anderen Wörter sind je ein Token.
 
@@ -509,7 +509,7 @@ Big video. Small file. Same resolution.
 Free. Link in bio.
 ```
 
-- [ ] **Step 3: Failing Tests schreiben**
+- [x] **Step 3: Failing Tests schreiben**
 
 `promo/tools/tests/test_scriptfile.py`:
 
@@ -595,12 +595,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ```
 
-- [ ] **Step 4: Tests laufen lassen, sie müssen fehlschlagen**
+- [x] **Step 4: Tests laufen lassen, sie müssen fehlschlagen**
 
 Run: `cd promo && .venv/Scripts/python -m pytest tools/tests -q`
 Expected: FAIL mit `ModuleNotFoundError: No module named 'scriptfile'`.
 
-- [ ] **Step 5: `scriptfile.py` implementieren**
+- [x] **Step 5: `scriptfile.py` implementieren**
 
 `promo/tools/scriptfile.py`:
 
@@ -652,7 +652,7 @@ def spoken_lines(tokens: list[Token]) -> list[str]:
     return lines
 ```
 
-- [ ] **Step 6: `align_core.py` implementieren**
+- [x] **Step 6: `align_core.py` implementieren**
 
 `promo/tools/align_core.py`:
 
@@ -751,12 +751,12 @@ def align(tokens: list[Token], heard: list[tuple[str, float, float]]) -> list[di
     return out
 ```
 
-- [ ] **Step 7: Tests laufen lassen, sie müssen grün sein**
+- [x] **Step 7: Tests laufen lassen, sie müssen grün sein**
 
 Run: `cd promo && .venv/Scripts/python -m pytest tools/tests -q`
 Expected: PASS, 7 Tests.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add promo/script.txt promo/requirements.txt promo/tools/scriptfile.py promo/tools/align_core.py promo/tools/tests
@@ -775,7 +775,7 @@ git commit -m "feat(promo): script parser and whisper-to-script word alignment"
 - Consumes: `parse_script`, `spoken_lines` (Task 2), `align`, `AlignmentError` (Task 2)
 - Produces: `public/audio/voiceover.wav` (24 kHz mono) und `src/words.json` im Format `Word[]` aus Task 1
 
-- [ ] **Step 1: `tts.py` schreiben**
+- [x] **Step 1: `tts.py` schreiben**
 
 `promo/tools/tts.py`:
 
@@ -835,19 +835,19 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Proben erzeugen**
+- [x] **Step 2: Proben erzeugen**
 
 Run: `cd promo && .venv/Scripts/python tools/tts.py --samples`
 Expected: drei WAVs unter `public/audio/samples/`, jeweils ca. 15 bis 19 s. Falls misaki beim ersten Lauf das spaCy-Modell nachlädt, ist das normal.
 
-- [ ] **Step 3: CHECKPOINT Stimmwahl durch den Nutzer**
+- [x] **Step 3: CHECKPOINT Stimmwahl durch den Nutzer**
 
 Die drei Proben an den Nutzer schicken (SendUserFile). Er wählt eine Stimme und prüft, ob „Pyno's“ richtig ausgesprochen wird. Klingt es falsch, wird in `script.txt` `Pyno's` durch `{Pyno's|<phonetisch>}` ersetzt (z. B. `{Pyno's|Pie-no's}`) und die Proben werden neu erzeugt. Weiter geht es erst nach der Wahl.
 
 Run (mit gewählter Stimme, z. B. am_onyx): `cd promo && .venv/Scripts/python tools/tts.py --voice am_onyx`
 Expected: `public/audio/voiceover.wav`.
 
-- [ ] **Step 4: `align.py` schreiben**
+- [x] **Step 4: `align.py` schreiben**
 
 `promo/tools/align.py`:
 
@@ -892,7 +892,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 5: Wortzeiten erzeugen und prüfen**
+- [x] **Step 5: Wortzeiten erzeugen und prüfen**
 
 Run: `cd promo && .venv/Scripts/python tools/align.py`
 Expected: „wrote …/src/words.json: 32 tokens from ~33 heard words“. In `words.json` steigen die Startzeiten monoton, der erste Eintrag ist `"48 MB."`.
@@ -900,7 +900,7 @@ Expected: „wrote …/src/words.json: 32 tokens from ~33 heard words“. In `wo
 Run: `cd promo && npm test`
 Expected: PASS. Die Tests hängen nicht an `words.json`, das hier ist nur ein Sanity-Check nach dem Überschreiben.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add promo/tools/tts.py promo/tools/align.py promo/src/words.json promo/script.txt
@@ -929,7 +929,7 @@ git commit -m "feat(promo): kokoro voiceover and whisper word timings"
   - `<Promo withSong: boolean />`, Kompositionen `Promo` (`withSong: false`) und `PromoPreview` (`withSong: true`)
   - `TIMELINE` in `Promo.tsx` exportiert (für Root und `stills.mjs`-Frame-Berechnung)
 
-- [ ] **Step 1: `theme.ts` und `fonts.ts`**
+- [x] **Step 1: `theme.ts` und `fonts.ts`**
 
 `promo/src/theme.ts`:
 
@@ -974,7 +974,7 @@ Promise.all([
 ]).then(() => continueRender(handle))
 ```
 
-- [ ] **Step 2: Grund-Komponenten**
+- [x] **Step 2: Grund-Komponenten**
 
 `promo/src/components/RevealWord.tsx`:
 
@@ -1059,7 +1059,7 @@ export function SceneShell({ durationInFrames, children }: { durationInFrames: n
 }
 ```
 
-- [ ] **Step 3: Vorläufige Szenen, `Promo`, `Root`, `index`**
+- [x] **Step 3: Vorläufige Szenen, `Promo`, `Root`, `index`**
 
 `promo/src/scenes/index.ts`:
 
@@ -1163,12 +1163,12 @@ import { Root } from './Root'
 registerRoot(Root)
 ```
 
-- [ ] **Step 4: Kompositionen prüfen**
+- [x] **Step 4: Kompositionen prüfen**
 
 Run: `cd promo && npm run typecheck && npx remotion compositions src/index.ts`
 Expected: Liste mit `Promo` und `PromoPreview`, 1440x1080, 30 fps, Dauer ca. 20 s.
 
-- [ ] **Step 5: Stills-Werkzeug**
+- [x] **Step 5: Stills-Werkzeug**
 
 Die Szenengrenzen schreibt ein Vitest-Lauf aus der echten `words.json`, damit kein zusätzlicher TS-Runner nötig ist. Er prüft nebenbei, dass die echte `words.json` eine gültige Timeline ergibt.
 
@@ -1211,7 +1211,7 @@ console.log('stills in out/stills')
 Run: `cd promo && npm run stills`
 Expected: sechs PNGs in `out/stills/`. Jedes zeigt die Wörter seiner Szene in Inter (nicht in der Fallback-Schrift). Mit dem Read-Tool ansehen. Einzelne Szene: `npm run stills -- hero`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add promo/src promo/tools/stills.mjs
@@ -1229,7 +1229,7 @@ git commit -m "feat(promo): theme, fonts, reveal words and Promo/PromoPreview co
 **Interfaces:**
 - Consumes: `SceneShell`, `WordLine`, `RevealWord` (Task 4), `C`, `FONT`, `SPRING` (Task 4), `SceneProps`
 
-- [ ] **Step 1: Hook**
+- [x] **Step 1: Hook**
 
 Storyboard: `48 MB.` groß in Inter 600 zentriert, darunter „Too big to send.“ klein in `ink3`. Kein Gold.
 
@@ -1257,7 +1257,7 @@ export function Hook({ t }: SceneProps) {
 }
 ```
 
-- [ ] **Step 2: Title**
+- [x] **Step 2: Title**
 
 Storyboard: „Meet“ klein, dann baut sich „Pyno's Squish.“ Buchstabe für Buchstabe in Fraunces auf. Gold nur auf „Squish.“.
 
@@ -1301,7 +1301,7 @@ export function Title({ t }: SceneProps) {
 }
 ```
 
-- [ ] **Step 3: Registrieren**
+- [x] **Step 3: Registrieren**
 
 In `promo/src/scenes/index.ts` die Imports ergänzen und `hook: Hook, title: Title` setzen:
 
@@ -1312,13 +1312,13 @@ import { Title } from './Title'
   hook: Hook, title: Title, hero: Placeholder,
 ```
 
-- [ ] **Step 4: Stills prüfen**
+- [x] **Step 4: Stills prüfen**
 
 Run: `cd promo && npm run typecheck && npm run stills -- hook && npm run stills -- title`
 
 Expected: Hook zeigt „48 MB.“ groß und „Too big to send.“ darunter, ohne Gold. Title zeigt „Meet“ und „Pyno's Squish.“, nur „Squish.“ ist gold. Überall mindestens 120 px Rand. Mit dem Read-Tool prüfen.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add promo/src/scenes
@@ -1338,7 +1338,7 @@ git commit -m "feat(promo): hook and title scenes"
 - Produces: `<AppWindow fileIn: number chipOn: number />`. `fileIn` läuft von 0 bis 1 (Datei-Karte gleitet in die Drop-Zone), `chipOn` von 0 bis 1 (Chip „Discord · 10 MB“ wird gold).
 - Produces: `heroChipFrame(t: SceneTiming): number`, der Szenen-Frame, an dem der Chip gold wird (Wort „going.“). Wird in Task 9 für den Klick-SFX genutzt.
 
-- [ ] **Step 1: AppWindow**
+- [x] **Step 1: AppWindow**
 
 Das Fenster ist ein vereinfachtes Nachbild der Squish-UI (Board A1/A2): Titelleiste mit „Pyno's Squish“, gestrichelte Drop-Zone, Preset-Chips. Es ist kein Screenshot.
 
@@ -1401,7 +1401,7 @@ export function AppWindow({ fileIn, chipOn }: { fileIn: number; chipOn: number }
 }
 ```
 
-- [ ] **Step 2: Hero**
+- [x] **Step 2: Hero**
 
 Der Satz steht oben, das Fenster schwebt gekippt herein. Die Datei gleitet beim Wort „video.“ hinein, der Chip wird bei „going.“ gold. Das ist das einzige Gold der Szene.
 
@@ -1444,16 +1444,16 @@ export function Hero({ t }: SceneProps) {
 }
 ```
 
-- [ ] **Step 3: Registrieren**
+- [x] **Step 3: Registrieren**
 
 In `promo/src/scenes/index.ts` `import { Hero } from './Hero'` ergänzen und `hero: Hero` setzen.
 
-- [ ] **Step 4: Stills prüfen**
+- [x] **Step 4: Stills prüfen**
 
 Run: `cd promo && npm run typecheck && npm run stills -- hero`. Das Still liegt bei 70 % der Szene, also nach „going.“.
 Expected: Fenster gekippt mit Schatten, Datei-Karte in der Drop-Zone, nur „Discord · 10 MB“ gold. Satz oben lesbar, Rand mindestens 120 px. Mit dem Read-Tool prüfen.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add promo/src/components/AppWindow.tsx promo/src/scenes
@@ -1472,7 +1472,7 @@ git commit -m "feat(promo): hero scene with tilted app window"
 **Interfaces:**
 - Produces: `formatMb(mb: number): string`, `countdownValue(p: number, from?: number, to?: number): number`
 
-- [ ] **Step 1: Failing Test**
+- [x] **Step 1: Failing Test**
 
 `promo/src/lib/format.test.ts`:
 
@@ -1502,7 +1502,7 @@ describe('countdownValue', () => {
 Run: `cd promo && npx vitest run src/lib/format.test.ts`
 Expected: FAIL, Modul fehlt.
 
-- [ ] **Step 2: Implementieren**
+- [x] **Step 2: Implementieren**
 
 `promo/src/lib/format.ts`:
 
@@ -1521,7 +1521,7 @@ export function countdownValue(p: number, from = 48, to = 9.7): number {
 Run: `cd promo && npx vitest run src/lib/format.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Countdown**
+- [x] **Step 3: Countdown**
 
 Die Zahl zählt ruhig herunter, mit leichtem horizontalem Squash in der Mitte der Bewegung. Die Endzahl wird gold, das ist das einzige Gold. Der gesprochene Satz steht darunter.
 
@@ -1559,7 +1559,7 @@ export function Countdown({ t }: SceneProps) {
 }
 ```
 
-- [ ] **Step 4: Triplet**
+- [x] **Step 4: Triplet**
 
 Drei Sätze, jeder einzeln. Ein Satz ist sichtbar ab seinem ersten Wort und bis zum ersten Wort des nächsten Satzes. „Same resolution.“ ist gold.
 
@@ -1603,7 +1603,7 @@ export function Triplet({ t }: SceneProps) {
 }
 ```
 
-- [ ] **Step 5: Registrieren, prüfen, committen**
+- [x] **Step 5: Registrieren, prüfen, committen**
 
 In `promo/src/scenes/index.ts` `Countdown` und `Triplet` importieren und eintragen.
 
@@ -1630,7 +1630,7 @@ git commit -m "feat(promo): countdown and triplet scenes"
 - Produces: `<SquishIcon size: number squeeze: number />`. `squeeze` läuft von 0 bis 1: Die Chevrons starten 70 Einheiten außen und landen bei 1 auf ihrer Icon-Position, dabei staucht sich der Rahmen kurz.
 - Produces: `ENDCARD_THUD_FRAME = 10`, der Szenen-Frame, an dem die Chevrons landen (für den SFX in Task 9).
 
-- [ ] **Step 1: SquishIcon**
+- [x] **Step 1: SquishIcon**
 
 Pfade und Farben sind 1:1 aus `scripts/make-icon.mjs` übernommen.
 
@@ -1666,7 +1666,7 @@ export function SquishIcon({ size, squeeze }: { size: number; squeeze: number })
 }
 ```
 
-- [ ] **Step 2: Endcard**
+- [x] **Step 2: Endcard**
 
 Oben „Free. Link in bio.“ als gesprochene Zeile, darunter das Icon neben „Pyno's Squish“ und „Free on Payhip.“ in Mono. Gold kommt hier nur im Icon vor, der Text bleibt in Ink-Tönen.
 
@@ -1705,7 +1705,7 @@ export function Endcard({ t }: SceneProps) {
 
 `durationInFrames + 30` sorgt dafür, dass der Exit-Spring der Shell nie greift. Das Endcard bleibt bis zum Ende stehen.
 
-- [ ] **Step 3: Registrieren und Placeholder entfernen**
+- [x] **Step 3: Registrieren und Placeholder entfernen**
 
 `promo/src/scenes/index.ts` final:
 
@@ -1728,7 +1728,7 @@ export const SCENE_COMPONENTS: Record<SceneId, FC<SceneProps>> = {
 
 Run: `git rm promo/src/scenes/Placeholder.tsx`
 
-- [ ] **Step 4: Prüfen und committen**
+- [x] **Step 4: Prüfen und committen**
 
 Run: `cd promo && npm run typecheck && npm run stills -- endcard`
 Danach alle sechs mit `npm run stills` neu erzeugen und gemeinsam prüfen (Gold höchstens einmal pro Szene).
@@ -1751,7 +1751,7 @@ git commit -m "feat(promo): animated squish icon endcard"
 - Consumes: `TIMELINE` (Task 4), `heroChipFrame` (Task 6), `ENDCARD_THUD_FRAME` (Task 8)
 - Produces: `public/audio/sfx/{whoosh,click,thud}.wav`, `out/promo-final.mp4`, `out/promo-preview-with-song.mp4`
 
-- [ ] **Step 1: SFX synthetisieren (lizenzfrei, deterministisch)**
+- [x] **Step 1: SFX synthetisieren (lizenzfrei, deterministisch)**
 
 `promo/tools/make-sfx.mjs`:
 
@@ -1777,7 +1777,7 @@ console.log('sfx written to', dir)
 Run: `cd promo && npm run sfx`
 Expected: drei WAVs unter `public/audio/sfx/`.
 
-- [ ] **Step 2: SFX in `Promo.tsx` einsetzen**
+- [x] **Step 2: SFX in `Promo.tsx` einsetzen**
 
 Ein Whoosh sitzt auf jedem Szenenwechsel ab Szene 2, zwei Frames davor, damit er in den Schnitt hineinläuft. Der Klick sitzt auf dem Chip-Frame der Hero-Szene, das Thud auf dem Landepunkt im Endcard. Ergänzen in `promo/src/Promo.tsx`:
 
@@ -1804,7 +1804,7 @@ Im JSX nach den VO-Sequenzen:
       ))}
 ```
 
-- [ ] **Step 3: Mastering**
+- [x] **Step 3: Mastering**
 
 `promo/tools/master.mjs`:
 
@@ -1823,7 +1823,7 @@ execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', IN, '-
 console.log(`mastered → ${OUT}`)
 ```
 
-- [ ] **Step 4: Upload-Version ohne `guide.mp3` rendern (Review Focus 5)**
+- [x] **Step 4: Upload-Version ohne `guide.mp3` rendern (Review Focus 5)**
 
 Run: `cd promo && mv public/audio/guide.mp3 public/audio/guide.mp3.bak 2>/dev/null; npm run render; mv public/audio/guide.mp3.bak public/audio/guide.mp3 2>/dev/null; true`
 Expected: `out/promo-final.mp4` wird erstellt, auch wenn `guide.mp3` fehlt.
@@ -1834,14 +1834,14 @@ Expected: genau eine `video,1440,1080,30/1`- und genau eine `audio`-Zeile.
 Run: `ffmpeg -hide_banner -i promo/out/promo-final.mp4 -af ebur128=peak=true -f null - 2>&1 | tail -12`
 Expected: `I:` zwischen −15,0 und −13,0 LUFS, `Peak:` höchstens −1,0 dBFS.
 
-- [ ] **Step 5: CHECKPOINT Guide-Spur durch den Nutzer**
+- [x] **Step 5: CHECKPOINT Guide-Spur durch den Nutzer**
 
 Der Nutzer legt „24K Magic“ als `promo/public/audio/guide.mp3` ab. In `npm run studio` die Komposition `PromoPreview` abspielen, dabei `MUSIC.offsetSec` (Einstieg um 23 s) und `MUSIC.firstBeatSec` (erster Beat nach dem Einstieg) nach Gehör einstellen. Bei Bedarf wird `sceneShiftSec` gesetzt, damit Satzanfänge auf Beats liegen. Das Studio lädt bei jeder Änderung neu.
 
 Run: `cd promo && npm test`
 Expected: grün. `timeline.frames.test.ts` wirft, falls ein Shift Szenen überlappen lässt.
 
-- [ ] **Step 6: Vorschau mit Song rendern**
+- [x] **Step 6: Vorschau mit Song rendern**
 
 Run: `cd promo && npm run render:preview`
 Expected: `out/promo-preview-with-song.mp4`, nur lokal (liegt in `out/`, ist ignoriert). An den Nutzer schicken (SendUserFile).
@@ -1849,7 +1849,7 @@ Expected: `out/promo-preview-with-song.mp4`, nur lokal (liegt in `out/`, ist ign
 Run: `cd promo && npm run render`
 Expected: `out/promo-final.mp4` mit den final abgestimmten Werten. An den Nutzer schicken.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add promo/tools/make-sfx.mjs promo/tools/master.mjs promo/src/Promo.tsx promo/src/music.ts
